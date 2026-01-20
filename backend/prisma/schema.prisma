@@ -1,0 +1,319 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Model (Authentication)
+model User {
+    id            String    @id @default(uuid())
+    email         String    @unique
+    password      String
+    name          String?
+    role          Role      @default(EMPLOYEE)
+    emailVerified DateTime?
+    image         String?
+    resetToken    String?
+    resetTokenExpiry DateTime?
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
+
+    employee Employee?
+    accounts Account[]
+    sessions Session[]
+
+    @@map("users")
+}
+
+// Employee Model
+model Employee {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  employeeId      String    @unique
+  firstName       String
+  lastName        String
+  email           String    @unique
+  phone           String?
+  dateOfBirth     DateTime?
+  gender          Gender?
+  address         String?
+  city            String?
+  country         String?
+  postalCode      String?
+  
+  // Employment Details
+  position        String
+  departmentId    String
+  department      Department @relation(fields: [departmentId], references: [id])
+  managerId       String?
+  manager         Employee?  @relation("ManagerSubordinate", fields: [managerId], references: [id])
+  subordinates    Employee[] @relation("ManagerSubordinate")
+  
+  salary          Decimal?
+  hireDate        DateTime
+  employmentType  EmploymentType
+  status          EmploymentStatus @default(ACTIVE)
+  
+  // Relations
+  attendance      Attendance[]
+  leaveRequests   LeaveRequest[]
+  performances    Performance[]
+  goals           Goal[]
+  reviews         Review[]
+  reviewsGiven    Review[]     @relation("Reviewer")
+  feedbackGiven   Feedback[]   @relation("FeedbackFrom")
+  feedbackReceived Feedback[]  @relation("FeedbackTo")
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("employees")
+}
+
+// Department Model
+model Department {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  description String?
+  headId      String?
+  
+  employees   Employee[]
+  
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  @@map("departments")
+}
+
+// Attendance Model
+model Attendance {
+  id          String    @id @default(cuid())
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  date        DateTime  @default(now())
+  clockIn     DateTime
+  clockOut    DateTime?
+  status      AttendanceStatus
+  notes       String?
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@map("attendance")
+}
+
+// Leave Request Model
+model LeaveRequest {
+  id          String      @id @default(cuid())
+  employeeId  String
+  employee    Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  type        LeaveType
+  startDate   DateTime
+  endDate     DateTime
+  reason      String
+  status      RequestStatus @default(PENDING)
+  approvedBy  String?
+  approvedAt  DateTime?
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  @@map("leave_requests")
+}
+
+// Performance Model
+model Performance {
+  id          String    @id @default(cuid())
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  metric      String
+  value       Decimal
+  target      Decimal?
+  period      String    // e.g., "2024-Q1", "2024-01"
+  notes       String?
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@map("performances")
+}
+
+// Goal Model
+model Goal {
+  id          String      @id @default(cuid())
+  employeeId  String
+  employee    Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  title       String
+  description String?
+  targetDate  DateTime
+  progress    Int         @default(0) // 0-100
+  status      GoalStatus  @default(IN_PROGRESS)
+  priority    Priority    @default(MEDIUM)
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  @@map("goals")
+}
+
+// Review Model
+model Review {
+  id          String    @id @default(cuid())
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  reviewerId  String
+  reviewer    Employee  @relation("Reviewer", fields: [reviewerId], references: [id])
+  period      String    // e.g., "2024-Q1"
+  overallRating Int     // 1-5
+  strengths   String?
+  improvements String?
+  goals       String?
+  comments    String?
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@map("reviews")
+}
+
+// Feedback Model (360-degree)
+model Feedback {
+  id          String    @id @default(cuid())
+  fromId      String
+  from        Employee  @relation("FeedbackFrom", fields: [fromId], references: [id])
+  toId        String
+  to          Employee  @relation("FeedbackTo", fields: [toId], references: [id])
+  
+  type        FeedbackType
+  rating      Int?      // 1-5
+  comment     String
+  isAnonymous Boolean   @default(false)
+  
+  createdAt   DateTime  @default(now())
+  
+  @@map("feedbacks")
+}
+
+// NextAuth Models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// Enums
+enum Role {
+  ADMIN
+  HR
+  MANAGER
+  EMPLOYEE
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERN
+}
+
+enum EmploymentStatus {
+  ACTIVE
+  INACTIVE
+  ON_LEAVE
+  TERMINATED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  HALF_DAY
+}
+
+enum LeaveType {
+  SICK
+  CASUAL
+  ANNUAL
+  MATERNITY
+  PATERNITY
+  UNPAID
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum GoalStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum FeedbackType {
+  PEER
+  MANAGER
+  SELF
+  SUBORDINATE
+}

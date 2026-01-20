@@ -6,6 +6,7 @@ import {
     updateGoal,
     deleteGoal,
     getPerformanceMetrics,
+    getPerformanceTrends,
 } from '../controllers/performanceController';
 import { authenticate } from '../middlewares/authMiddleware';
 import { asyncHandler } from '../middlewares/errorHandler';
@@ -51,5 +52,6 @@ router.delete('/goals/:id', asyncHandler(deleteGoal));
  * @access  Private
  */
 router.get('/metrics', asyncHandler(getPerformanceMetrics));
+router.get('/trends', asyncHandler(getPerformanceTrends));
 
 export default router;

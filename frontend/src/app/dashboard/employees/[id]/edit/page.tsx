@@ -15,6 +15,11 @@ interface Department {
     name: string;
 }
 
+interface Shift {
+    id: string;
+    name: string;
+}
+
 interface Employee {
     id: string;
     employeeId: string;
@@ -64,17 +69,37 @@ export default function EditEmployeePage() {
         hireDate: '',
         employmentType: 'FULL_TIME',
         status: 'ACTIVE',
+        shiftId: '',
     });
+    const [shifts, setShifts] = useState<Shift[]>([]);
 
     useEffect(() => {
         fetchDepartments();
+        fetchShifts();
         fetchEmployee();
     }, [id]);
+
+    const fetchShifts = async () => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            const response = await fetch('/api/shifts', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            const data = await response.json();
+            if (data.success) {
+                setShifts(data.data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch shifts', err);
+        }
+    };
 
     const fetchDepartments = async () => {
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await fetch('http://localhost:5000/api/departments', {
+            const response = await fetch('/api/departments', {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -91,7 +116,7 @@ export default function EditEmployeePage() {
     const fetchEmployee = async () => {
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await fetch(`http://localhost:5000/api/employees/${id}`, {
+            const response = await fetch(`/api/employees/${id}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -117,6 +142,7 @@ export default function EditEmployeePage() {
                     hireDate: emp.hireDate ? emp.hireDate.split('T')[0] : '',
                     employmentType: emp.employmentType || 'FULL_TIME',
                     status: emp.status || 'ACTIVE',
+                    shiftId: emp.shiftId || '',
                 });
             }
         } catch (err) {
@@ -134,7 +160,7 @@ export default function EditEmployeePage() {
 
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await fetch(`http://localhost:5000/api/employees/${id}`, {
+            const response = await fetch(`/api/employees/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -256,6 +282,25 @@ export default function EditEmployeePage() {
                                     {departments.map((dept) => (
                                         <SelectItem key={dept.id} value={dept.id}>
                                             {dept.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label htmlFor="shift">Assign Shift</Label>
+                            <Select
+                                value={formData.shiftId}
+                                onValueChange={(value) => setFormData({ ...formData, shiftId: value })}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select shift (optional)" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">No Shift</SelectItem>
+                                    {shifts.map((shift) => (
+                                        <SelectItem key={shift.id} value={shift.id}>
+                                            {shift.name}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>

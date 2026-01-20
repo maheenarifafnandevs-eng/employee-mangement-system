@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import {
     getAllReviews,
+    getReview,
+    getEmployeeReviews,
     createReview,
     updateReview,
 } from '../controllers/reviewController';
@@ -19,6 +21,20 @@ router.use(authenticate);
  * @access  Private
  */
 router.get('/', asyncHandler(getAllReviews));
+
+/**
+ * @route   GET /api/reviews/employee/:id
+ * @desc    Get employee reviews
+ * @access  Private
+ */
+router.get('/employee/:id', asyncHandler(getEmployeeReviews));
+
+/**
+ * @route   GET /api/reviews/:id
+ * @desc    Get single review
+ * @access  Private
+ */
+router.get('/:id', asyncHandler(getReview));
 
 /**
  * @route   POST /api/reviews

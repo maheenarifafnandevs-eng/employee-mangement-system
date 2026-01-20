@@ -67,7 +67,7 @@ export default function GoalsPage() {
     const fetchGoals = async () => {
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await fetch('http://localhost:5000/api/performance/goals', {
+            const response = await fetch('/api/performance/goals', {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -89,7 +89,7 @@ export default function GoalsPage() {
 
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await fetch(`http://localhost:5000/api/performance/goals/${deleteId}`, {
+            const response = await fetch(`/api/performance/goals/${deleteId}`, {
                 method: 'DELETE',
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -129,6 +129,19 @@ export default function GoalsPage() {
             URGENT: 'bg-red-100 text-red-800',
         };
         return <Badge className={colors[priority] || colors.MEDIUM}>{priority}</Badge>;
+    };
+
+    const getCompletionStatus = (goal: Goal) => {
+        if (goal.status !== 'COMPLETED' || !goal.completedAt) return null;
+
+        const completed = new Date(goal.completedAt);
+        const due = new Date(goal.dueDate);
+
+        if (completed <= due) {
+            return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 ml-2">On-time</Badge>;
+        } else {
+            return <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 ml-2">Late</Badge>;
+        }
     };
 
     const filteredGoals = goals.filter((goal) => {
@@ -238,7 +251,12 @@ export default function GoalsPage() {
                                                     <div className="text-xs text-muted-foreground">{goal.progress}%</div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>{getStatusBadge(goal.status)}</TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center">
+                                                    {getStatusBadge(goal.status)}
+                                                    {getCompletionStatus(goal)}
+                                                </div>
+                                            </TableCell>
                                             <TableCell>{getPriorityBadge(goal.priority)}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-1 text-sm">

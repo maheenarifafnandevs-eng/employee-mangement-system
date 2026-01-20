@@ -50,7 +50,7 @@ export default function DepartmentsPage() {
             const token = localStorage.getItem('accessToken');
             console.log('Fetching departments with token:', token ? 'exists' : 'missing');
 
-            const response = await fetch('http://localhost:5000/api/departments', {
+            const response = await fetch('/api/departments', {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -79,7 +79,7 @@ export default function DepartmentsPage() {
 
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await fetch(`http://localhost:5000/api/departments/${deleteId}`, {
+            const response = await fetch(`/api/departments/${deleteId}`, {
                 method: 'DELETE',
                 headers: {
                     Authorization: `Bearer ${token}`,

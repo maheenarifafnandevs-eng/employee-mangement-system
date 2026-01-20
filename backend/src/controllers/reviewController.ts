@@ -113,6 +113,54 @@ export const createReview = async (req: AuthRequest, res: Response) => {
 };
 
 /**
+ * Get single review
+ */
+export const getReview = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        const review = await prisma.review.findUnique({
+            where: { id },
+            include: {
+                employee: {
+                    select: {
+                        firstName: true,
+                        lastName: true,
+                        employeeId: true,
+                        position: true,
+                    },
+                },
+                reviewer: {
+                    select: {
+                        firstName: true,
+                        lastName: true,
+                        position: true,
+                    },
+                },
+            },
+        });
+
+        if (!review) {
+            return res.status(404).json({
+                success: false,
+                message: 'Review not found',
+            });
+        }
+
+        res.json({
+            success: true,
+            data: review,
+        });
+    } catch (_error: any) {
+        logger.error('Get review error:', _error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch review',
+        });
+    }
+};
+
+/**
  * Update review
  */
 export const updateReview = async (req: AuthRequest, res: Response) => {
@@ -137,6 +185,42 @@ export const updateReview = async (req: AuthRequest, res: Response) => {
         res.status(500).json({
             success: false,
             message: 'Failed to update review',
+        });
+    }
+};
+
+/**
+ * Get employee reviews
+ */
+export const getEmployeeReviews = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id: employeeId } = req.params;
+
+        const reviews = await prisma.review.findMany({
+            where: { employeeId },
+            include: {
+                reviewer: {
+                    select: {
+                        firstName: true,
+                        lastName: true,
+                        position: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        });
+
+        res.json({
+            success: true,
+            data: reviews,
+        });
+    } catch (_error: any) {
+        logger.error('Get employee reviews error:', _error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch employee reviews',
         });
     }
 };

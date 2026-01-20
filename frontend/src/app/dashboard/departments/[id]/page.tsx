@@ -53,7 +53,7 @@ export default function EditDepartmentPage() {
     const fetchDepartment = async () => {
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await fetch(`http://localhost:5000/api/departments/${id}`, {
+            const response = await fetch(`/api/departments/${id}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -80,7 +80,7 @@ export default function EditDepartmentPage() {
 
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await fetch(`http://localhost:5000/api/departments/${id}`, {
+            const response = await fetch(`/api/departments/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

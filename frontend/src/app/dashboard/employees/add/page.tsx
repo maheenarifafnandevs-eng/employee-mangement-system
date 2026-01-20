@@ -22,6 +22,7 @@ export default function AddEmployeePage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [departments, setDepartments] = useState<any[]>([]);
+    const [shifts, setShifts] = useState<any[]>([]);
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -39,6 +40,7 @@ export default function AddEmployeePage() {
         salary: '',
         hireDate: '',
         employmentType: 'FULL_TIME',
+        shiftId: '',
     });
 
     useEffect(() => {
@@ -47,7 +49,7 @@ export default function AddEmployeePage() {
                 const token = localStorage.getItem('accessToken');
                 console.log('Fetching departments for employee form, token:', token ? 'exists' : 'missing');
 
-                const response = await fetch('http://localhost:5000/api/departments', {
+                const response = await fetch('/api/departments', {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -67,7 +69,20 @@ export default function AddEmployeePage() {
                 console.error('Failed to fetch departments', err);
             }
         };
+        const fetchShifts = async () => {
+            try {
+                const token = localStorage.getItem('accessToken');
+                const response = await fetch('/api/shifts', {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                const data = await response.json();
+                if (data.success) setShifts(data.data);
+            } catch (err) {
+                console.error('Failed to fetch shifts', err);
+            }
+        };
         fetchDepartments();
+        fetchShifts();
     }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -77,7 +92,7 @@ export default function AddEmployeePage() {
 
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await fetch('http://localhost:5000/api/employees', {
+            const response = await fetch('/api/employees', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -296,6 +311,25 @@ export default function AddEmployeePage() {
                                         <SelectItem value="PART_TIME">Part Time</SelectItem>
                                         <SelectItem value="CONTRACT">Contract</SelectItem>
                                         <SelectItem value="INTERN">Intern</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div>
+                                <Label htmlFor="shiftId">Assign Shift</Label>
+                                <Select
+                                    value={formData.shiftId}
+                                    onValueChange={(value) => setFormData({ ...formData, shiftId: value })}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select shift" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">No Shift</SelectItem>
+                                        {shifts.map((shift) => (
+                                            <SelectItem key={shift.id} value={shift.id}>
+                                                {shift.name}
+                                            </SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Users, UserCheck, UserX, Clock } from 'lucide-react';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,40 +19,91 @@ import {
     Legend,
     ResponsiveContainer,
 } from 'recharts';
+import { formatDistanceToNow } from 'date-fns';
 
-// Mock data - will be replaced with API calls
-const attendanceData = [
-    { date: 'Mon', present: 85, absent: 15 },
-    { date: 'Tue', present: 88, absent: 12 },
-    { date: 'Wed', present: 82, absent: 18 },
-    { date: 'Thu', present: 90, absent: 10 },
-    { date: 'Fri', present: 87, absent: 13 },
-    { date: 'Sat', present: 45, absent: 55 },
-    { date: 'Sun', present: 20, absent: 80 },
-];
+interface DashboardStats {
+    totalEmployees: number;
+    presentToday: number;
+    onLeave: number;
+    pendingRequests: number;
+}
 
-const departmentData = [
-    { name: 'Engineering', value: 45, color: '#7CB8E8' },
-    { name: 'HR', value: 12, color: '#A8D5F2' },
-    { name: 'Sales', value: 28, color: '#FDB813' },
-    { name: 'Marketing', value: 15, color: '#6C7278' },
-];
+interface Activity {
+    id: string;
+    employee: string;
+    action: string;
+    time: string;
+}
 
-const performanceData = [
-    { department: 'Engineering', score: 85 },
-    { department: 'HR', score: 92 },
-    { department: 'Sales', score: 78 },
-    { department: 'Marketing', score: 88 },
-];
+interface DepartmentStat {
+    name: string;
+    value: number;
+}
 
-const recentActivity = [
-    { id: 1, employee: 'John Doe', action: 'Marked attendance', time: '10 minutes ago' },
-    { id: 2, employee: 'Jane Smith', action: 'Submitted leave request', time: '1 hour ago' },
-    { id: 3, employee: 'Mike Johnson', action: 'Updated profile', time: '2 hours ago' },
-    { id: 4, employee: 'Sarah Williams', action: 'Completed goal', time: '3 hours ago' },
-];
+interface AttendanceTrend {
+    date: string;
+    present: number;
+    absent: number;
+}
 
 export default function DashboardPage() {
+    const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [attendanceTrend, setAttendanceTrend] = useState<AttendanceTrend[]>([]);
+    const [departmentDist, setDepartmentDist] = useState<DepartmentStat[]>([]);
+    const [activities, setActivities] = useState<Activity[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            try {
+                const token = localStorage.getItem('accessToken');
+                const headers = { Authorization: `Bearer ${token}` };
+
+                const [statsRes, trendRes, distRes, activityRes] = await Promise.all([
+                    fetch('/api/dashboard/stats', { headers }),
+                    fetch('/api/dashboard/attendance-trend', { headers }),
+                    fetch('/api/dashboard/department-distribution', { headers }),
+                    fetch('/api/dashboard/recent-activity', { headers })
+                ]);
+
+                const [statsData, trendData, distData, activityData] = await Promise.all([
+                    statsRes.json(),
+                    trendRes.json(),
+                    distRes.json(),
+                    activityRes.json()
+                ]);
+
+                if (statsData.success) setStats(statsData.data);
+                if (trendData.success) setAttendanceTrend(trendData.data);
+                if (distData.success) setDepartmentDist(distData.data);
+                if (activityData.success) setActivities(activityData.data);
+            } catch (error) {
+                console.error('Failed to fetch dashboard data:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDashboardData();
+    }, []);
+
+    if (loading) {
+        return <div className="flex items-center justify-center min-h-[400px]">Loading dashboard...</div>;
+    }
+
+    // Default stats if none found
+    const displayStats = stats || {
+        totalEmployees: 0,
+        presentToday: 0,
+        onLeave: 0,
+        pendingRequests: 0
+    };
+
+    const attendanceRate = displayStats.totalEmployees > 0
+        ? Math.round((displayStats.presentToday / displayStats.totalEmployees) * 100)
+        : 0;
+
+    const COLORS = ['#7CB8E8', '#A8D5F2', '#FDB813', '#6C7278', '#4F46E5', '#10B981'];
     return (
         <div className="space-y-6">
             {/* Page Header */}
@@ -66,27 +118,25 @@ export default function DashboardPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatsCard
                     title="Total Employees"
-                    value="100"
+                    value={displayStats.totalEmployees.toString()}
                     icon={Users}
                     description="Active employees"
-                    trend={{ value: 12, isPositive: true }}
                 />
                 <StatsCard
                     title="Present Today"
-                    value="87"
+                    value={displayStats.presentToday.toString()}
                     icon={UserCheck}
-                    description="87% attendance rate"
-                    trend={{ value: 5, isPositive: true }}
+                    description={`${attendanceRate}% attendance rate`}
                 />
                 <StatsCard
                     title="On Leave"
-                    value="8"
+                    value={displayStats.onLeave.toString()}
                     icon={UserX}
                     description="Approved leaves"
                 />
                 <StatsCard
                     title="Pending Requests"
-                    value="5"
+                    value={displayStats.pendingRequests.toString()}
                     icon={Clock}
                     description="Awaiting approval"
                 />
@@ -102,9 +152,12 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent>
                         <ResponsiveContainer width="100%" height={300}>
-                            <LineChart data={attendanceData}>
+                            <LineChart data={attendanceTrend}>
                                 <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="date" />
+                                <XAxis
+                                    dataKey="date"
+                                    tickFormatter={(date) => new Date(date).toLocaleDateString(undefined, { weekday: 'short' })}
+                                />
                                 <YAxis />
                                 <Tooltip />
                                 <Legend />
@@ -137,7 +190,7 @@ export default function DashboardPage() {
                         <ResponsiveContainer width="100%" height={300}>
                             <PieChart>
                                 <Pie
-                                    data={departmentData}
+                                    data={departmentDist}
                                     cx="50%"
                                     cy="50%"
                                     labelLine={false}
@@ -146,8 +199,8 @@ export default function DashboardPage() {
                                     fill="#8884d8"
                                     dataKey="value"
                                 >
-                                    {departmentData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    {departmentDist.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
                                 <Tooltip />
@@ -161,11 +214,16 @@ export default function DashboardPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Performance Overview</CardTitle>
-                    <CardDescription>Average performance score by department</CardDescription>
+                    <CardDescription>Average performance score by department (Mock Data)</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={performanceData}>
+                        <BarChart data={[
+                            { department: 'Engineering', score: 85 },
+                            { department: 'HR', score: 92 },
+                            { department: 'Sales', score: 78 },
+                            { department: 'Marketing', score: 88 }
+                        ]}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="department" />
                             <YAxis />
@@ -185,7 +243,7 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
-                        {recentActivity.map((activity) => (
+                        {activities.length > 0 ? activities.map((activity) => (
                             <div
                                 key={activity.id}
                                 className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0"
@@ -194,9 +252,13 @@ export default function DashboardPage() {
                                     <p className="font-medium">{activity.employee}</p>
                                     <p className="text-sm text-muted-foreground">{activity.action}</p>
                                 </div>
-                                <span className="text-xs text-muted-foreground">{activity.time}</span>
+                                <span className="text-xs text-muted-foreground">
+                                    {formatDistanceToNow(new Date(activity.time), { addSuffix: true })}
+                                </span>
                             </div>
-                        ))}
+                        )) : (
+                            <p className="text-sm text-muted-foreground text-center py-4">No recent activity found</p>
+                        )}
                     </div>
                 </CardContent>
             </Card>

@@ -29,6 +29,7 @@ export const getAllEmployees = async (req: AuthRequest, res: Response) => {
                         lastName: true,
                     },
                 },
+                shift: true,
             },
             orderBy: {
                 createdAt: 'desc',
@@ -99,6 +100,7 @@ export const getEmployee = async (req: AuthRequest, res: Response) => {
                         createdAt: 'desc',
                     },
                 },
+                shift: true,
             },
         });
 
@@ -191,6 +193,7 @@ export const createEmployee = async (req: AuthRequest, res: Response) => {
                     },
                 },
                 department: true,
+                shift: true,
             },
         });
 
@@ -247,6 +250,7 @@ export const updateEmployee = async (req: AuthRequest, res: Response) => {
                     },
                 },
                 department: true,
+                shift: true,
             },
         });
 

@@ -24,21 +24,21 @@ export const clockIn = async (req: AuthRequest, res: Response) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // Check if already clocked in today
-        const existing = await prisma.attendance.findFirst({
-            where: {
-                employeeId: employee.id,
-                date: {
-                    gte: today,
-                },
-            },
-        });
+        // Check assigned shift for punctuality
+        let status: 'PRESENT' | 'LATE' = 'PRESENT';
+        if (employee.shiftId) {
+            const shift = await prisma.shift.findUnique({ where: { id: employee.shiftId } });
+            if (shift) {
+                const now = new Date();
+                const [shiftHour, shiftMin] = shift.startTime.split(':').map(Number);
+                const shiftTime = new Date();
+                shiftTime.setHours(shiftHour, shiftMin, 0, 0);
 
-        if (existing) {
-            return res.status(400).json({
-                success: false,
-                message: 'Already clocked in today',
-            });
+                // Add 15 minutes grace period
+                if (now.getTime() > shiftTime.getTime() + 15 * 60 * 1000) {
+                    status = 'LATE';
+                }
+            }
         }
 
         const attendance = await prisma.attendance.create({
@@ -46,15 +46,15 @@ export const clockIn = async (req: AuthRequest, res: Response) => {
                 employeeId: employee.id,
                 date: new Date(),
                 clockIn: new Date(),
-                status: 'PRESENT',
+                status,
             },
         });
 
-        logger.info(`Clock in: ${employee.email}`);
+        logger.info(`Clock in: ${employee.email} - Status: ${status}`);
 
         res.json({
             success: true,
-            message: 'Clocked in successfully',
+            message: status === 'LATE' ? 'Clocked in successfully (Late)' : 'Clocked in successfully',
             data: attendance,
         });
     } catch (_error: any) {
@@ -193,6 +193,61 @@ export const getMonthlySummary = async (req: AuthRequest, res: Response) => {
         res.status(500).json({
             success: false,
             message: 'Failed to fetch monthly summary',
+        });
+    }
+};
+
+/**
+ * Get detailed attendance report
+ */
+export const getAttendanceReport = async (req: AuthRequest, res: Response) => {
+    try {
+        const { startDate, endDate, departmentId, employeeId } = req.query;
+
+        const where: any = {};
+
+        if (startDate || endDate) {
+            where.date = {};
+            if (startDate) where.date.gte = new Date(startDate as string);
+            if (endDate) where.date.lte = new Date(endDate as string);
+        }
+
+        if (employeeId) {
+            where.employeeId = employeeId;
+        } else if (departmentId) {
+            where.employee = {
+                departmentId: departmentId as string
+            };
+        }
+
+        const attendance = await prisma.attendance.findMany({
+            where,
+            include: {
+                employee: {
+                    select: {
+                        firstName: true,
+                        lastName: true,
+                        employeeId: true,
+                        department: {
+                            select: { name: true }
+                        }
+                    }
+                }
+            },
+            orderBy: {
+                date: 'desc'
+            }
+        });
+
+        res.json({
+            success: true,
+            data: attendance
+        });
+    } catch (_error: any) {
+        logger.error('Get attendance report error:', _error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch attendance report',
         });
     }
 };

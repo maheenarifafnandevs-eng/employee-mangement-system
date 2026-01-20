@@ -36,7 +36,7 @@ export default function EditGoalPage() {
         const fetchGoal = async () => {
             try {
                 const token = localStorage.getItem('accessToken');
-                const response = await fetch(`http://localhost:5000/api/performance/goals/${id}`, {
+                const response = await fetch(`/api/performance/goals/${id}`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -79,7 +79,7 @@ export default function EditGoalPage() {
 
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await fetch(`http://localhost:5000/api/performance/goals/${id}`, {
+            const response = await fetch(`/api/performance/goals/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

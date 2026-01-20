@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,8 @@ import { toast } from 'sonner';
 export default function AddGoalPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [departments, setDepartments] = useState<any[]>([]);
+    const [employees, setEmployees] = useState<any[]>([]);
     const [error, setError] = useState('');
     const [formData, setFormData] = useState({
         title: '',
@@ -26,7 +28,44 @@ export default function AddGoalPage() {
         status: 'NOT_STARTED',
         priority: 'MEDIUM',
         dueDate: '',
+        departmentId: '', // For Department goals
+        targetEmployeeId: '', // For Team/Individual goals
     });
+
+    useEffect(() => {
+        fetchDepartments();
+        fetchEmployees();
+    }, []);
+
+    const fetchDepartments = async () => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            const response = await fetch('/api/departments', {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await response.json();
+            if (data.success) {
+                setDepartments(data.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch departments:', error);
+        }
+    };
+
+    const fetchEmployees = async () => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            const response = await fetch('/api/employees', {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await response.json();
+            if (data.success) {
+                setEmployees(data.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch employees:', error);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -35,7 +74,7 @@ export default function AddGoalPage() {
 
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await fetch('http://localhost:5000/api/performance/goals', {
+            const response = await fetch('/api/performance/goals', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -44,6 +83,8 @@ export default function AddGoalPage() {
                 body: JSON.stringify({
                     ...formData,
                     progress: parseInt(formData.progress),
+                    // If individual goal and targetEmployeeId is set, it might be a manager creating for subordinate
+                    employeeId: formData.category === 'INDIVIDUAL' && formData.targetEmployeeId ? formData.targetEmployeeId : undefined
                 }),
             });
 
@@ -114,7 +155,7 @@ export default function AddGoalPage() {
                                 <Label htmlFor="category">Category *</Label>
                                 <Select
                                     value={formData.category}
-                                    onValueChange={(value) => setFormData({ ...formData, category: value })}
+                                    onValueChange={(value) => setFormData({ ...formData, category: value, departmentId: '', targetEmployeeId: '' })}
                                 >
                                     <SelectTrigger>
                                         <SelectValue />
@@ -142,6 +183,55 @@ export default function AddGoalPage() {
                                 </Select>
                             </div>
                         </div>
+
+                        {/* Conditional Fields based on Category */}
+                        {formData.category === 'DEPARTMENT' && (
+                            <div>
+                                <Label htmlFor="departmentId">Select Department *</Label>
+                                <Select
+                                    value={formData.departmentId}
+                                    onValueChange={(value) => setFormData({ ...formData, departmentId: value })}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Choose a department" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {departments.map((dept) => (
+                                            <SelectItem key={dept.id} value={dept.id}>
+                                                {dept.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    This goal will be tracked for all members of the selected department.
+                                </p>
+                            </div>
+                        )}
+
+                        {formData.category === 'TEAM' && (
+                            <div>
+                                <Label htmlFor="targetEmployeeId">Select Team Leader / Manager *</Label>
+                                <Select
+                                    value={formData.targetEmployeeId}
+                                    onValueChange={(value) => setFormData({ ...formData, targetEmployeeId: value })}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Choose a manager" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {employees.map((emp) => (
+                                            <SelectItem key={emp.id} value={emp.id}>
+                                                {emp.firstName} {emp.lastName} ({emp.position})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    This goal will track the performance of this manager and their direct subordinates.
+                                </p>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 

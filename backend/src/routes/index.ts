@@ -7,8 +7,10 @@ import leaveRoutes from './leaveRoutes';
 import attendanceRoutes from './attendanceRoutes';
 import performanceRoutes from './performanceRoutes';
 import reviewRoutes from './reviewRoutes';
+import reviewCycleRoutes from './reviewCycleRoutes';
 import feedbackRoutes from './feedbackRoutes';
 import departmentRoutes from './departmentRoutes';
+import shiftRoutes from './shiftRoutes';
 
 const router = Router();
 
@@ -21,8 +23,10 @@ router.use('/leaves', leaveRoutes);
 router.use('/attendance', attendanceRoutes);
 router.use('/performance', performanceRoutes);
 router.use('/reviews', reviewRoutes);
+router.use('/review-cycles', reviewCycleRoutes);
 router.use('/feedback', feedbackRoutes);
 router.use('/departments', departmentRoutes);
+router.use('/shifts', shiftRoutes);
 
 // Health check for API
 router.get('/health', (req, res) => {

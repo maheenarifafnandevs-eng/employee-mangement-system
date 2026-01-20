@@ -25,7 +25,7 @@ export default function AddDepartmentPage() {
 
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await fetch('http://localhost:5000/api/departments', {
+            const response = await fetch('/api/departments', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

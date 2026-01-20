@@ -54,10 +54,10 @@ export default function LeavesPage() {
 
     const fetchLeaves = async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('accessToken');
             const url = statusFilter === 'ALL'
-                ? 'http://localhost:5000/api/leaves'
-                : `http://localhost:5000/api/leaves?status=${statusFilter}`;
+                ? '/api/leaves'
+                : `/api/leaves?status=${statusFilter}`;
 
             const response = await fetch(url, {
                 headers: {
@@ -78,8 +78,8 @@ export default function LeavesPage() {
 
     const fetchBalance = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:5000/api/leaves/balance', {
+            const token = localStorage.getItem('accessToken');
+            const response = await fetch('/api/leaves/balance', {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -96,8 +96,8 @@ export default function LeavesPage() {
 
     const handleApprove = async (id: string) => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:5000/api/leaves/${id}/approve`, {
+            const token = localStorage.getItem('accessToken');
+            const response = await fetch(`/api/leaves/${id}/approve`, {
                 method: 'PUT',
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -114,8 +114,8 @@ export default function LeavesPage() {
 
     const handleReject = async (id: string) => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:5000/api/leaves/${id}/reject`, {
+            const token = localStorage.getItem('accessToken');
+            const response = await fetch(`/api/leaves/${id}/reject`, {
                 method: 'PUT',
                 headers: {
                     Authorization: `Bearer ${token}`,

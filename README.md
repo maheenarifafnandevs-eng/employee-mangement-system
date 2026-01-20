@@ -225,3 +225,17 @@ For issues and questions:
 ---
 
 Built with ❤️ using Next.js, Node.js, and PostgreSQL
+
+
+**Manual Testing in attendance module**:
+- Manual Verification
+- Create a "Morning Shift" (9 AM - 5 PM).
+- Assign it to an employee.
+- Check-in after 9 AM and verify if the status is marked as "LATE".
+- Generate an attendance report for the current week and verify the accuracy of the summary stats.
+
+**🎯 Task Deadline Tracking (Performance)**:
+- Navigate to the Attendance Page.
+- Test the Clock In and Clock Out buttons. Notice the Work Duration timer updates live.
+- Go to the Goals Page.
+- Mark a goal as COMPLETED. If it was done before the due date, it will show an "On-time" badge. Otherwise, it will show as "Late".

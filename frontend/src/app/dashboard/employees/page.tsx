@@ -22,6 +22,13 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
     AlertDialog,
     AlertDialogAction,
     AlertDialogCancel,
@@ -45,6 +52,9 @@ interface Employee {
     department: {
         name: string;
     };
+    shift?: {
+        name: string;
+    };
     status: string;
     hireDate: string;
 }
@@ -52,18 +62,36 @@ interface Employee {
 export default function EmployeesPage() {
     const router = useRouter();
     const [employees, setEmployees] = useState<Employee[]>([]);
+    const [shifts, setShifts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [shiftFilter, setShiftFilter] = useState('all');
     const [deleteId, setDeleteId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchEmployees();
+        fetchShifts();
     }, []);
+
+    const fetchShifts = async () => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            const response = await fetch('/api/shifts', {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await response.json();
+            if (data.success) {
+                setShifts(data.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch shifts:', error);
+        }
+    };
 
     const fetchEmployees = async () => {
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await fetch('http://localhost:5000/api/employees', {
+            const response = await fetch('/api/employees', {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -86,7 +114,7 @@ export default function EmployeesPage() {
 
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await fetch(`http://localhost:5000/api/employees/${deleteId}`, {
+            const response = await fetch(`/api/employees/${deleteId}`, {
                 method: 'DELETE',
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -106,11 +134,13 @@ export default function EmployeesPage() {
         }
     };
 
-    const filteredEmployees = employees.filter((emp) =>
-        `${emp.firstName} ${emp.lastName} ${emp.email} ${emp.position}`
+    const filteredEmployees = employees.filter((emp) => {
+        const matchesSearch = `${emp.firstName} ${emp.lastName} ${emp.email} ${emp.position}`
             .toLowerCase()
-            .includes(searchTerm.toLowerCase())
-    );
+            .includes(searchTerm.toLowerCase());
+        const matchesShift = shiftFilter === 'all' || emp.shift?.name === shiftFilter;
+        return matchesSearch && matchesShift;
+    });
 
     const getStatusBadge = (status: string) => {
         const variants: Record<string, 'default' | 'secondary' | 'destructive'> = {
@@ -155,8 +185,8 @@ export default function EmployeesPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="mb-4">
-                        <div className="relative">
+                    <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-center">
+                        <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 placeholder="Search employees..."
@@ -164,6 +194,21 @@ export default function EmployeesPage() {
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="pl-10"
                             />
+                        </div>
+                        <div className="w-full md:w-48">
+                            <Select value={shiftFilter} onValueChange={setShiftFilter}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="All Shifts" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Shifts</SelectItem>
+                                    {shifts.map((s) => (
+                                        <SelectItem key={s.id} value={s.name}>
+                                            {s.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
 
@@ -177,6 +222,7 @@ export default function EmployeesPage() {
                                     <TableHead>Email</TableHead>
                                     <TableHead>Position</TableHead>
                                     <TableHead>Department</TableHead>
+                                    <TableHead>Shift</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead>Hire Date</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
@@ -185,7 +231,7 @@ export default function EmployeesPage() {
                             <TableBody>
                                 {filteredEmployees.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={8} className="text-center">
+                                        <TableCell colSpan={9} className="text-center">
                                             No employees found
                                         </TableCell>
                                     </TableRow>
@@ -199,6 +245,13 @@ export default function EmployeesPage() {
                                             <TableCell>{employee.email}</TableCell>
                                             <TableCell>{employee.position}</TableCell>
                                             <TableCell>{employee.department.name}</TableCell>
+                                            <TableCell>
+                                                {employee.shift ? (
+                                                    <Badge variant="outline">{employee.shift.name}</Badge>
+                                                ) : (
+                                                    <span className="text-xs text-muted-foreground italic">None</span>
+                                                )}
+                                            </TableCell>
                                             <TableCell>{getStatusBadge(employee.status)}</TableCell>
                                             <TableCell>
                                                 {new Date(employee.hireDate).toLocaleDateString()}

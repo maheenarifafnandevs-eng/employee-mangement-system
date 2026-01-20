@@ -5,7 +5,11 @@ import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Mail, Phone, MapPin, Calendar, Briefcase, Building2 } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, MapPin, Calendar, Briefcase, Building2, Target, Award, Eye } from 'lucide-react';
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { StarRating } from '@/components/performance/StarRating';
+import { format } from 'date-fns';
 
 interface Employee {
     id: string;
@@ -36,16 +40,22 @@ export default function EmployeeDetailPage() {
     const id = params.id as string;
 
     const [employee, setEmployee] = useState<Employee | null>(null);
+    const [reviews, setReviews] = useState<any[]>([]);
+    const [goals, setGoals] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchEmployee();
+        if (id) {
+            fetchEmployee();
+            fetchReviews();
+            fetchGoals();
+        }
     }, [id]);
 
     const fetchEmployee = async () => {
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await fetch(`http://localhost:5000/api/employees/${id}`, {
+            const response = await fetch(`/api/employees/${id}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -58,6 +68,36 @@ export default function EmployeeDetailPage() {
             console.error('Failed to fetch employee:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchReviews = async () => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            const response = await fetch(`/api/reviews/employee/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await response.json();
+            if (data.success) {
+                setReviews(data.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch reviews');
+        }
+    };
+
+    const fetchGoals = async () => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            const response = await fetch(`/api/performance/goals?employeeId=${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await response.json();
+            if (data.success) {
+                setGoals(data.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch goals');
         }
     };
 
@@ -90,95 +130,190 @@ export default function EmployeeDetailPage() {
                         <h1 className="text-3xl font-bold tracking-tight">
                             {employee.firstName} {employee.lastName}
                         </h1>
-                        <p className="text-muted-foreground">{employee.position}</p>
+                        <p className="text-muted-foreground">{employee.position} • {employee.employeeId}</p>
                     </div>
                 </div>
-                <Button onClick={() => router.push(`/dashboard/employees/${id}/edit`)}>
-                    Edit Employee
-                </Button>
+                <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => router.push(`/dashboard/performance/reviews/add?employeeId=${id}`)}>
+                        Create Review
+                    </Button>
+                    <Button onClick={() => router.push(`/dashboard/employees/${id}/edit`)}>
+                        Edit Profile
+                    </Button>
+                </div>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Personal Information</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex items-center gap-3">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                                <p className="text-sm text-muted-foreground">Email</p>
-                                <p className="font-medium">{employee.email}</p>
-                            </div>
-                        </div>
-                        {employee.phone && (
-                            <div className="flex items-center gap-3">
-                                <Phone className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Phone</p>
-                                    <p className="font-medium">{employee.phone}</p>
-                                </div>
-                            </div>
-                        )}
-                        {employee.address && (
-                            <div className="flex items-center gap-3">
-                                <MapPin className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Address</p>
-                                    <p className="font-medium">
-                                        {employee.address}
-                                        {employee.city && `, ${employee.city}`}
-                                        {employee.country && `, ${employee.country}`}
-                                    </p>
-                                </div>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+            <Tabs defaultValue="info" className="space-y-6">
+                <TabsList>
+                    <TabsTrigger value="info">General Info</TabsTrigger>
+                    <TabsTrigger value="reviews">Review History</TabsTrigger>
+                    <TabsTrigger value="goals">Performance Goals</TabsTrigger>
+                </TabsList>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Employment Details</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div>
-                            <p className="text-sm text-muted-foreground">Employee ID</p>
-                            <p className="font-medium">{employee.employeeId}</p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <Building2 className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                                <p className="text-sm text-muted-foreground">Department</p>
-                                <p className="font-medium">{employee.department.name}</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <Briefcase className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                                <p className="text-sm text-muted-foreground">Position</p>
-                                <p className="font-medium">{employee.position}</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                                <p className="text-sm text-muted-foreground">Hire Date</p>
-                                <p className="font-medium">
-                                    {new Date(employee.hireDate).toLocaleDateString()}
-                                </p>
-                            </div>
-                        </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">Employment Type</p>
-                            <p className="font-medium">{employee.employmentType.replace('_', ' ')}</p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">Status</p>
-                            {getStatusBadge(employee.status)}
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+                <TabsContent value="info" className="space-y-6">
+                    <div className="grid gap-6 md:grid-cols-2">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Personal Information</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <Mail className="h-4 w-4 text-muted-foreground" />
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Email</p>
+                                        <p className="font-medium">{employee.email}</p>
+                                    </div>
+                                </div>
+                                {employee.phone && (
+                                    <div className="flex items-center gap-3">
+                                        <Phone className="h-4 w-4 text-muted-foreground" />
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Phone</p>
+                                            <p className="font-medium">{employee.phone}</p>
+                                        </div>
+                                    </div>
+                                )}
+                                {employee.address && (
+                                    <div className="flex items-center gap-3">
+                                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Address</p>
+                                            <p className="font-medium">
+                                                {employee.address}
+                                                {employee.city && `, ${employee.city}`}
+                                                {employee.country && `, ${employee.country}`}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Employment Details</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Department</p>
+                                        <p className="font-medium">{employee.department.name}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <Briefcase className="h-4 w-4 text-muted-foreground" />
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Position</p>
+                                        <p className="font-medium">{employee.position}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Hire Date</p>
+                                        <p className="font-medium">
+                                            {format(new Date(employee.hireDate), 'PPP')}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Employment Type</p>
+                                    <p className="font-medium">{employee.employmentType.replace('_', ' ')}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Status</p>
+                                    {getStatusBadge(employee.status)}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="reviews">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Performance Reviews</CardTitle>
+                            <CardDescription>Historical performance evaluations for this employee</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {reviews.length === 0 ? (
+                                <div className="text-center py-8 text-muted-foreground">
+                                    No reviews found for this employee.
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {reviews.map((review) => (
+                                        <div key={review.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-lg">{review.period}</span>
+                                                    <Badge variant="secondary">{format(new Date(review.createdAt), 'MMM yyyy')}</Badge>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <StarRating rating={review.overallRating} size={16} />
+                                                    <span className="text-sm text-muted-foreground">by {review.reviewer.firstName} {review.reviewer.lastName}</span>
+                                                </div>
+                                            </div>
+                                            <Button variant="ghost" size="sm" onClick={() => router.push(`/dashboard/performance/reviews/${review.id}`)}>
+                                                <Eye className="h-4 w-4 mr-2" /> View Details
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="goals">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Active & Past Goals</CardTitle>
+                            <CardDescription>Strategic objectives assigned to this employee</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {goals.length === 0 ? (
+                                <div className="text-center py-8 text-muted-foreground">
+                                    No goals assigned to this employee.
+                                </div>
+                            ) : (
+                                <div className="grid gap-4 md:grid-cols-2">
+                                    {goals.map((goal) => (
+                                        <div key={goal.id} className="p-4 border rounded-lg space-y-3">
+                                            <div className="flex items-start justify-between">
+                                                <div className="space-y-1">
+                                                    <h4 className="font-semibold">{goal.title}</h4>
+                                                    <p className="text-xs text-muted-foreground line-clamp-2">{goal.description}</p>
+                                                </div>
+                                                <Badge variant={goal.status === 'COMPLETED' ? 'default' : 'outline'}>
+                                                    {goal.status.replace('_', ' ')}
+                                                </Badge>
+                                            </div>
+                                            <div className="flex items-center gap-4 text-xs">
+                                                <div className="flex items-center gap-1">
+                                                    <Calendar className="h-3 w-3" />
+                                                    <span>Due {format(new Date(goal.dueDate), 'MMM dd')}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <Target className="h-3 w-3" />
+                                                    <span>{goal.progress}% Complete</span>
+                                                </div>
+                                            </div>
+                                            <div className="w-full bg-secondary h-1.5 rounded-full overflow-hidden">
+                                                <div
+                                                    className="bg-primary h-full transition-all"
+                                                    style={{ width: `${goal.progress}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }

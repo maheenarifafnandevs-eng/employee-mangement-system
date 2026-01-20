@@ -1,14 +1,14 @@
+import dotenv from 'dotenv';
+// Load environment variables immediately
+dotenv.config();
+
 import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import routes from './routes';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler';
 import logger from './middlewares/logger';
-
-// Load environment variables
-dotenv.config();
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;

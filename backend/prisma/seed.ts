@@ -201,8 +201,10 @@ async function main() {
 
     let empNum = 5;
     for (const emp of employeesData) {
-        const user = await prisma.user.create({
-            data: {
+        const user = await prisma.user.upsert({
+            where: { email: emp.email },
+            update: {},
+            create: {
                 email: emp.email,
                 password: hashedPassword,
                 name: `${emp.firstName} ${emp.lastName}`,
@@ -211,8 +213,10 @@ async function main() {
             },
         });
 
-        await prisma.employee.create({
-            data: {
+        await prisma.employee.upsert({
+            where: { email: emp.email },
+            update: {},
+            create: {
                 userId: user.id,
                 employeeId: `EMP${String(empNum).padStart(3, '0')}`,
                 firstName: emp.firstName,

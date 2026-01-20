@@ -11,6 +11,7 @@ import {
     Settings,
     LogOut,
     Building2,
+    Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -18,9 +19,12 @@ const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Employees', href: '/dashboard/employees', icon: Users },
     { name: 'Departments', href: '/dashboard/departments', icon: Building2 },
+    { name: 'Shifts', href: '/dashboard/shifts', icon: Clock },
     { name: 'Attendance', href: '/dashboard/attendance', icon: Calendar },
+    { name: 'Attendance Reports', href: '/dashboard/attendance/reports', icon: BarChart3 },
     { name: 'Leave Requests', href: '/dashboard/leaves', icon: FileText },
     { name: 'Performance', href: '/dashboard/performance', icon: BarChart3 },
+    { name: 'Performance Reviews', href: '/dashboard/performance/reviews', icon: FileText },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 

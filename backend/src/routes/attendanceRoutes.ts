@@ -3,14 +3,23 @@ import {
     clockIn,
     clockOut,
     getMonthlySummary,
+    getAttendanceReport,
 } from '../controllers/attendanceController';
 import { authenticate } from '../middlewares/authMiddleware';
+import { requireRole } from '../middlewares/roleMiddleware';
 import { asyncHandler } from '../middlewares/errorHandler';
 
 const router = Router();
 
 // All routes require authentication
 router.use(authenticate);
+
+/**
+ * @route   GET /api/attendance/report
+ * @desc    Get detailed attendance report
+ * @access  Admin, HR, Manager
+ */
+router.get('/report', requireRole('ADMIN', 'HR', 'MANAGER'), asyncHandler(getAttendanceReport));
 
 /**
  * @route   POST /api/attendance/clock-in

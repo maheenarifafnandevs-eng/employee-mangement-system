@@ -62,7 +62,18 @@ export const getAllGoals = async (req: AuthRequest, res: Response) => {
  */
 export const createGoal = async (req: AuthRequest, res: Response) => {
     try {
-        const { title, description, targetDate, priority } = req.body;
+        const {
+            title,
+            description,
+            category,
+            type,
+            targetValue,
+            currentValue,
+            progress,
+            status,
+            priority,
+            dueDate
+        } = req.body;
         const userId = req.user?.userId;
 
         const employee = await prisma.employee.findUnique({
@@ -81,10 +92,14 @@ export const createGoal = async (req: AuthRequest, res: Response) => {
                 employeeId: employee.id,
                 title,
                 description,
-                targetDate: new Date(targetDate),
+                category: category || 'INDIVIDUAL',
+                type: type || 'QUALITATIVE',
+                targetValue,
+                currentValue,
+                progress: progress || 0,
+                status: status || 'NOT_STARTED',
                 priority: priority || 'MEDIUM',
-                status: 'NOT_STARTED',
-                progress: 0,
+                dueDate: new Date(dueDate),
             },
         });
 
@@ -105,6 +120,37 @@ export const createGoal = async (req: AuthRequest, res: Response) => {
 };
 
 /**
+ * Get single goal
+ */
+export const getGoal = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        const goal = await prisma.goal.findUnique({
+            where: { id },
+        });
+
+        if (!goal) {
+            return res.status(404).json({
+                success: false,
+                message: 'Goal not found',
+            });
+        }
+
+        res.json({
+            success: true,
+            data: goal,
+        });
+    } catch (_error: any) {
+        logger.error('Get goal error:', _error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch goal',
+        });
+    }
+};
+
+/**
  * Update goal
  */
 export const updateGoal = async (req: AuthRequest, res: Response) => {
@@ -112,8 +158,8 @@ export const updateGoal = async (req: AuthRequest, res: Response) => {
         const { id } = req.params;
         const updateData = req.body;
 
-        if (updateData.targetDate) {
-            updateData.targetDate = new Date(updateData.targetDate);
+        if (updateData.dueDate) {
+            updateData.dueDate = new Date(updateData.dueDate);
         }
 
         const goal = await prisma.goal.update({

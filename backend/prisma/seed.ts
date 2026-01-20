@@ -1,4 +1,4 @@
-import { PrismaClient, Role, Gender, EmploymentType, EmploymentStatus, AttendanceStatus, GoalStatus, Priority } from '@prisma/client';
+import { PrismaClient, Role, Gender, EmploymentType, EmploymentStatus, AttendanceStatus, GoalStatus, GoalCategory, GoalType, Priority } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -240,7 +240,9 @@ async function main() {
             employeeId: employee1.id,
             title: 'Complete React Advanced Course',
             description: 'Finish the advanced React course on Udemy',
-            targetDate: new Date('2024-12-31'),
+            category: GoalCategory.INDIVIDUAL,
+            type: GoalType.QUALITATIVE,
+            dueDate: new Date('2024-12-31'),
             progress: 45,
             status: GoalStatus.IN_PROGRESS,
             priority: Priority.HIGH,
@@ -252,7 +254,11 @@ async function main() {
             employeeId: employee1.id,
             title: 'Improve Code Review Skills',
             description: 'Review at least 20 PRs this quarter',
-            targetDate: new Date('2024-06-30'),
+            category: GoalCategory.INDIVIDUAL,
+            type: GoalType.QUANTITATIVE,
+            targetValue: '20',
+            currentValue: '14',
+            dueDate: new Date('2024-06-30'),
             progress: 70,
             status: GoalStatus.IN_PROGRESS,
             priority: Priority.MEDIUM,

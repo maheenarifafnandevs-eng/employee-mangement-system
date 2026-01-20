@@ -151,19 +151,25 @@ model Performance {
 
 // Goal Model
 model Goal {
-  id          String      @id @default(cuid())
-  employeeId  String
-  employee    Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  id           String       @id @default(cuid())
+  employeeId   String
+  employee     Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   
-  title       String
-  description String?
-  targetDate  DateTime
-  progress    Int         @default(0) // 0-100
-  status      GoalStatus  @default(IN_PROGRESS)
-  priority    Priority    @default(MEDIUM)
+  title        String
+  description  String?
+  category     GoalCategory @default(INDIVIDUAL)
+  type         GoalType     @default(QUALITATIVE)
+  targetValue  String?
+  currentValue String?
+  progress     Int          @default(0) // 0-100
+  status       GoalStatus   @default(NOT_STARTED)
+  priority     Priority     @default(MEDIUM)
+  startDate    DateTime     @default(now())
+  dueDate      DateTime
+  completedAt  DateTime?
   
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
   
   @@map("goals")
 }
@@ -301,7 +307,19 @@ enum GoalStatus {
   NOT_STARTED
   IN_PROGRESS
   COMPLETED
+  OVERDUE
   CANCELLED
+}
+
+enum GoalCategory {
+  INDIVIDUAL
+  TEAM
+  DEPARTMENT
+}
+
+enum GoalType {
+  QUANTITATIVE
+  QUALITATIVE
 }
 
 enum Priority {

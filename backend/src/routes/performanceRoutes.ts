@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
     getAllGoals,
+    getGoal,
     createGoal,
     updateGoal,
     deleteGoal,
@@ -14,12 +15,14 @@ const router = Router();
 // All routes require authentication
 router.use(authenticate);
 
+router.get('/goals', asyncHandler(getAllGoals));
+
 /**
- * @route   GET /api/performance/goals
- * @desc    Get all goals
+ * @route   GET /api/performance/goals/:id
+ * @desc    Get single goal
  * @access  Private
  */
-router.get('/goals', asyncHandler(getAllGoals));
+router.get('/goals/:id', asyncHandler(getGoal));
 
 /**
  * @route   POST /api/performance/goals

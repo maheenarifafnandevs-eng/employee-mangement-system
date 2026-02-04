@@ -25,7 +25,7 @@ export async function authFetch(endpoint: string, options: FetchOptions = {}): P
     };
 
     if (token && !skipAuth) {
-        headers['Authorization'] = `Bearer ${token}`;
+        (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
     }
 
     // Make the request

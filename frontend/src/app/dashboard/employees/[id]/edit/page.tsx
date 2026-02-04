@@ -74,9 +74,53 @@ export default function EditEmployeePage() {
         employmentType: 'FULL_TIME',
         status: 'ACTIVE',
         shiftId: '',
+        cnic: '',
+        highestQualification: '',
+        institute: '',
     });
     const [shifts, setShifts] = useState<Shift[]>([]);
+    const [cnicError, setCnicError] = useState('');
+    const [document, setDocument] = useState<File | null>(null);
 
+    const handleCNICChange = (value: string) => {
+        // Allow only number and dash
+        if (!/^[0-9-]*$/.test(value)) return;
+
+        // Auto insert dash
+        let formattedCnic = value.replace(/-/g, '');
+        if (formattedCnic.length > 5) {
+            formattedCnic = formattedCnic.slice(0, 5) + '-' + formattedCnic.slice(5);
+        }
+        if (formattedCnic.length > 13) {
+            formattedCnic = formattedCnic.slice(0, 13) + '-' + formattedCnic.slice(13);
+        }
+        if (formattedCnic.length > 15) return;
+
+        setFormData({ ...formData, cnic: formattedCnic });
+
+        // Validate Format (13 digits total)
+        const digitsOnly = formattedCnic.replace(/-/g, '');
+        if (digitsOnly.length === 13) {
+            setCnicError('');
+        } else {
+            setCnicError('CNIC must be 13 digits');
+        }
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                toast.error('File size should be less than 5MB');
+                return;
+            }
+            setDocument(file);
+        }
+    };
+
+    const handleRemoveDocument = () => {
+        setDocument(null);
+    };
     useEffect(() => {
         fetchDepartments();
         fetchShifts();
@@ -147,6 +191,9 @@ export default function EditEmployeePage() {
                     employmentType: emp.employmentType || 'FULL_TIME',
                     status: emp.status || 'ACTIVE',
                     shiftId: emp.shiftId || '',
+                    cnic: emp.cnic || '',
+                    highestQualification: emp.highestQualification || '',
+                    institute: emp.institute || '',
                 });
             }
         } catch (err) {

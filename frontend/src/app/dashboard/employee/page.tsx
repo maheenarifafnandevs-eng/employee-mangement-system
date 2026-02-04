@@ -123,7 +123,7 @@ export default function EmployeeDashboardPage() {
                 <MetricCard
                     title="Completed"
                     value={data?.tasks.completed || 0}
-                    description={`${data?.tasks.total > 0 ? Math.round((data.tasks.completed / data.tasks.total) * 100) : 0}% completion rate`}
+                    description={`${(data?.tasks?.total || 0) > 0 ? Math.round(((data?.tasks?.completed || 0) / (data?.tasks?.total || 1)) * 100) : 0}% completion rate`}
                     icon={CheckCircle2}
                     className="border-l-4 border-l-green-500"
                 />

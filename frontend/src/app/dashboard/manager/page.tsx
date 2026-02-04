@@ -143,7 +143,7 @@ export default function ManagerDashboardPage() {
                 <MetricCard
                     title="Completed"
                     value={data?.teamTasks.completed || 0}
-                    description={`${data?.teamTasks.total > 0 ? Math.round((data.teamTasks.completed / data.teamTasks.total) * 100) : 0}% completion`}
+                    description={`${(data?.teamTasks?.total || 0) > 0 ? Math.round(((data?.teamTasks?.completed || 0) / (data?.teamTasks?.total || 1)) * 100) : 0}% completion`}
                     icon={CheckCircle2}
                     className="border-l-4 border-l-green-500"
                 />

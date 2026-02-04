@@ -159,7 +159,7 @@ export default function DepartmentsPage() {
                                                 variant="ghost"
                                                 size="icon"
                                                 onClick={() => setDeleteId(dept.id)}
-                                                disabled={dept._count?.employees > 0}
+                                                disabled={(dept._count?.employees || 0) > 0}
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>

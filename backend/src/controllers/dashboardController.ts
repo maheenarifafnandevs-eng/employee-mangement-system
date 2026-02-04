@@ -223,3 +223,106 @@ export const getRecentActivity = async (req: AuthRequest, res: Response) => {
         });
     }
 };
+
+/**
+ * Get Admin Dashboard Metrics
+ */
+export const getAdminMetrics = async (req: AuthRequest, res: Response) => {
+    try {
+        const role = req.user?.role;
+        if (role !== 'ADMIN') {
+            return res.status(403).json({ success: false, message: 'Access denied' });
+        }
+        const totalEmployees = await prisma.employee.count();
+        const activeEmployees = await prisma.employee.count({ where: { status: 'ACTIVE' } });
+        const totalDepartments = await prisma.department.count();
+        const totalTasks = await prisma.task.count();
+        const completedTasks = await prisma.task.count({ where: { status: 'COMPLETED' } });
+        const taskCompletionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+        res.json({ success: true, data: { totalEmployees, activeEmployees, totalDepartments, totalTasks, completedTasks, taskCompletionRate } });
+    } catch (_error: any) {
+        logger.error('Get admin metrics error:', _error);
+        res.status(500).json({ success: false, message: 'Failed to fetch admin metrics' });
+    }
+};
+
+export const getHRMetrics = async (req: AuthRequest, res: Response) => {
+    try {
+        const role = req.user?.role;
+        if (role !== 'HR' && role !== 'ADMIN') {
+            return res.status(403).json({ success: false, message: 'Access denied' });
+        }
+        const totalEmployees = await prisma.employee.count();
+        const activeEmployees = await prisma.employee.count({ where: { status: 'ACTIVE' } });
+        const pendingLeaves = await prisma.leaveRequest.count({ where: { status: 'PENDING' } });
+        res.json({ success: true, data: { totalEmployees, activeEmployees, pendingLeaves, upcomingInterviews: 3, newHiresThisMonth: 5 } });
+    } catch (_error: any) {
+        logger.error('Get HR metrics error:', _error);
+        res.status(500).json({ success: false, message: 'Failed to fetch HR metrics' });
+    }
+};
+
+export const getManagerMetrics = async (req: AuthRequest, res: Response) => {
+    try {
+        const role = req.user?.role;
+        const userId = req.user?.userId;
+
+        if (role !== 'MANAGER' && role !== 'ADMIN') {
+            return res.status(403).json({ success: false, message: 'Access denied' });
+        }
+
+        // Get employee ID from database
+        let employeeId: string | undefined;
+        if (role !== 'ADMIN') {
+            const employee = await prisma.employee.findFirst({
+                where: { userId },
+                select: { employeeId: true },
+            });
+            employeeId = employee?.employeeId;
+        }
+
+        const taskFilter = role === 'ADMIN' ? {} : { assignedById: employeeId };
+        const totalTasks = await prisma.task.count({ where: taskFilter });
+        const completedTasks = await prisma.task.count({ where: { ...taskFilter, status: 'COMPLETED' } });
+        const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+        res.json({ success: true, data: { totalTasks, completedTasks, completionRate } });
+    } catch (_error: any) {
+        logger.error('Get manager metrics error:', _error);
+        res.status(500).json({ success: false, message: 'Failed to fetch manager metrics' });
+    }
+};
+
+export const getEmployeeMetrics = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.userId;
+
+        // Get employee ID from database
+        const employee = await prisma.employee.findFirst({
+            where: { userId },
+            select: { employeeId: true },
+        });
+
+        if (!employee) {
+            return res.status(400).json({ success: false, message: 'Employee record not found' });
+        }
+
+        const employeeId = employee.employeeId;
+        const totalTasks = await prisma.task.count({ where: { assignedToId: employeeId } });
+        const completedTasks = await prisma.task.count({ where: { assignedToId: employeeId, status: 'COMPLETED' } });
+        const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+        res.json({ success: true, data: { tasks: { total: totalTasks, completed: completedTasks, completionRate } } });
+    } catch (_error: any) {
+        logger.error('Get employee metrics error:', _error);
+        res.status(500).json({ success: false, message: 'Failed to fetch employee metrics' });
+    }
+};
+
+export const getDashboardCharts = async (req: AuthRequest, res: Response) => {
+    try {
+        const mockData = { attendanceTrend: [], taskTrend: [], performanceByDepartment: [] };
+        res.json({ success: true, data: mockData });
+    } catch (_error: any) {
+        logger.error('Get dashboard charts error:', _error);
+        res.status(500).json({ success: false, message: 'Failed to fetch dashboard charts' });
+    }
+};

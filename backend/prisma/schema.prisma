@@ -27,8 +27,31 @@ model User {
     employee Employee?
     accounts Account[]
     sessions Session[]
+    preferences UserPreferences?
+    dashboardPreference DashboardPreference?
+    notifications Notification[]
 
     @@map("users")
+}
+
+// User Preferences Model
+model UserPreferences {
+    id          String   @id @default(uuid())
+    userId      String   @unique
+    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    
+    // Notification Settings
+    emailNotifications      Boolean @default(true)
+    leaveRequestUpdates     Boolean @default(true)
+    performanceReviews      Boolean @default(true)
+    
+    // Appearance Settings
+    theme       String   @default("system") // light, dark, system
+    
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    
+    @@map("user_preferences")
 }
 
 // Employee Model
@@ -48,6 +71,11 @@ model Employee {
   city            String?
   country         String?
   postalCode      String?
+  
+  // Additional Personal Information
+  cnic                  String?    @unique  // National ID card number
+  highestQualification  String?             // e.g., "Master's in Computer Science"
+  institute             String?             // e.g., "MIT", "Harvard"
   
   // Employment Details
   position        String
@@ -74,11 +102,36 @@ model Employee {
   reviewsGiven    Review[]     @relation("Reviewer")
   feedbackGiven   Feedback[]   @relation("FeedbackFrom")
   feedbackReceived Feedback[]  @relation("FeedbackTo")
+  documents       EmployeeDocument[]
+  
+  // Task Management Relations
+  assignedTasks   Task[]       @relation("AssignedTasks")
+  createdTasks    Task[]       @relation("CreatedTasks")
+  taskComments    TaskComment[]
+  taskAttachments TaskAttachment[]
   
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   
   @@map("employees")
+}
+
+// Employee Document Model
+model EmployeeDocument {
+  id          String       @id @default(cuid())
+  employeeId  String
+  employee    Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  documentType DocumentType
+  fileName    String
+  filePath    String       // Relative path to file
+  fileSize    Int          // Size in bytes
+  mimeType    String       // e.g., "application/pdf"
+  
+  uploadedBy  String?      // User ID who uploaded
+  uploadedAt  DateTime     @default(now())
+  
+  @@map("employee_documents")
 }
 
 // Department Model
@@ -243,6 +296,10 @@ model Feedback {
   comment     String
   isAnonymous Boolean   @default(false)
   
+  // Sentiment Analysis
+  sentimentScore Float? // -1 to 1
+  sentimentLabel String? // Positive, Negative, Neutral
+  
   createdAt   DateTime  @default(now())
   
   @@map("feedbacks")
@@ -386,3 +443,138 @@ enum FeedbackType {
   SELF
   SUBORDINATE
 }
+
+enum DocumentType {
+  CV
+  RESUME
+  CERTIFICATE
+  CONTRACT
+  ID_CARD
+  OFFER_LETTER
+  OTHER
+}
+
+// Task Management Models
+model Task {
+  id              String        @id @default(cuid())
+  title           String
+  description     String?       @db.Text
+  priority        TaskPriority  @default(MEDIUM)
+  status          TaskStatus    @default(PENDING)
+  category        String?
+  
+  assignedToId    String
+  assignedTo      Employee      @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: Cascade)
+  
+  assignedById    String
+  assignedBy      Employee      @relation("CreatedTasks", fields: [assignedById], references: [id])
+  
+  dueDate         DateTime
+  estimatedHours  Float?
+  actualHours     Float?
+  
+  startedAt       DateTime?
+  completedAt     DateTime?
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  comments        TaskComment[]
+  attachments     TaskAttachment[]
+  
+  @@map("tasks")
+}
+
+model TaskComment {
+  id          String    @id @default(cuid())
+  taskId      String
+  task        Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  
+  comment     String    @db.Text
+  createdAt   DateTime  @default(now())
+  
+  @@map("task_comments")
+}
+
+model TaskAttachment {
+  id          String    @id @default(cuid())
+  taskId      String
+  task        Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  fileName    String
+  filePath    String
+  fileSize    Int
+  mimeType    String
+  
+  uploadedById String
+  uploadedBy   Employee  @relation(fields: [uploadedById], references: [id])
+  
+  createdAt   DateTime  @default(now())
+  
+  @@map("task_attachments")
+}
+
+model DashboardPreference {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  widgetLayout    Json?    // Store widget positions and visibility
+  defaultView     String   @default("overview")
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("dashboard_preferences")
+}
+
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  ON_HOLD
+}
+
+enum NotificationType {
+  TASK_ASSIGNED
+  TASK_COMPLETED
+  TASK_DEADLINE
+  TASK_UPDATED
+  LEAVE_APPROVED
+  LEAVE_REJECTED
+  SYSTEM_ANNOUNCEMENT
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type        NotificationType
+  title       String
+  message     String
+  
+  relatedId   String?          // Task ID, Leave ID, etc.
+  relatedType String?          // "TASK", "LEAVE", etc.
+  
+  isRead      Boolean          @default(false)
+  
+  createdAt   DateTime         @default(now())
+  
+  @@map("notifications")
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+

@@ -146,6 +146,9 @@ export const createEmployee = async (req: AuthRequest, res: Response) => {
             salary,
             hireDate,
             employmentType,
+            cnic,
+            highestQualification,
+            institute,
         } = req.body;
 
         // Generate employee ID
@@ -184,6 +187,9 @@ export const createEmployee = async (req: AuthRequest, res: Response) => {
                 hireDate: new Date(hireDate),
                 employmentType,
                 status: 'ACTIVE',
+                cnic: cnic || null,
+                highestQualification: highestQualification || null,
+                institute: institute || null,
             },
             include: {
                 user: {
@@ -366,3 +372,169 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
         });
     }
 };
+
+/**
+ * Upload employee document
+ */
+export const uploadDocument = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { documentType } = req.body;
+
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: 'No file uploaded',
+            });
+        }
+
+        // Verify employee exists
+        const employee = await prisma.employee.findUnique({
+            where: { id },
+        });
+
+        if (!employee) {
+            return res.status(404).json({
+                success: false,
+                message: 'Employee not found',
+            });
+        }
+
+        // Create document record
+        const document = await prisma.employeeDocument.create({
+            data: {
+                employeeId: id,
+                documentType: documentType || 'OTHER',
+                fileName: req.file.originalname,
+                filePath: req.file.path,
+                fileSize: req.file.size,
+                mimeType: req.file.mimetype,
+                uploadedBy: req.user?.userId,
+            },
+        });
+
+        logger.info(`Document uploaded for employee: ${id}`);
+
+        res.status(201).json({
+            success: true,
+            message: 'Document uploaded successfully',
+            data: document,
+        });
+    } catch (_error: any) {
+        logger.error('Upload document error:', _error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to upload document',
+        });
+    }
+};
+
+/**
+ * Get employee documents
+ */
+export const getEmployeeDocuments = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        const documents = await prisma.employeeDocument.findMany({
+            where: {
+                employeeId: id,
+            },
+            orderBy: {
+                uploadedAt: 'desc',
+            },
+        });
+
+        res.json({
+            success: true,
+            data: documents,
+        });
+    } catch (_error: any) {
+        logger.error('Get documents error:', _error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch documents',
+        });
+    }
+};
+
+/**
+ * Delete employee document
+ */
+export const deleteDocument = async (req: AuthRequest, res: Response) => {
+    try {
+        const { documentId } = req.params;
+
+        const document = await prisma.employeeDocument.findUnique({
+            where: { id: documentId },
+        });
+
+        if (!document) {
+            return res.status(404).json({
+                success: false,
+                message: 'Document not found',
+            });
+        }
+
+        // Delete file from filesystem
+        const fs = require('fs');
+        if (fs.existsSync(document.filePath)) {
+            fs.unlinkSync(document.filePath);
+        }
+
+        // Delete database record
+        await prisma.employeeDocument.delete({
+            where: { id: documentId },
+        });
+
+        logger.info(`Document deleted: ${documentId}`);
+
+        res.json({
+            success: true,
+            message: 'Document deleted successfully',
+        });
+    } catch (_error: any) {
+        logger.error('Delete document error:', _error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to delete document',
+        });
+    }
+};
+
+/**
+ * Download employee document
+ */
+export const downloadDocument = async (req: AuthRequest, res: Response) => {
+    try {
+        const { documentId } = req.params;
+
+        const document = await prisma.employeeDocument.findUnique({
+            where: { id: documentId },
+        });
+
+        if (!document) {
+            return res.status(404).json({
+                success: false,
+                message: 'Document not found',
+            });
+        }
+
+        const fs = require('fs');
+        if (!fs.existsSync(document.filePath)) {
+            return res.status(404).json({
+                success: false,
+                message: 'File not found on server',
+            });
+        }
+
+        res.download(document.filePath, document.fileName);
+    } catch (_error: any) {
+        logger.error('Download document error:', _error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to download document',
+        });
+    }
+};
+

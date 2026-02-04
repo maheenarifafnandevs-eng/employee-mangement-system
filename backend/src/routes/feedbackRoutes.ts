@@ -4,6 +4,7 @@ import {
     giveFeedback,
     getReceivedFeedback,
     getGivenFeedback,
+    getFeedbackAnalytics,
 } from '../controllers/feedbackController';
 import { authenticate } from '../middlewares/authMiddleware';
 import { asyncHandler } from '../middlewares/errorHandler';
@@ -40,5 +41,12 @@ router.get('/received', asyncHandler(getReceivedFeedback));
  * @access  Private
  */
 router.get('/given', asyncHandler(getGivenFeedback));
+
+/**
+ * @route   GET /api/feedback/analytics
+ * @desc    Get feedback analytics
+ * @access  Private
+ */
+router.get('/analytics', asyncHandler(getFeedbackAnalytics));
 
 export default router;

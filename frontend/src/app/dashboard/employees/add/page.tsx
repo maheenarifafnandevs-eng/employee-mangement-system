@@ -14,7 +14,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Upload, X, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AddEmployeePage() {
@@ -41,7 +41,12 @@ export default function AddEmployeePage() {
         hireDate: '',
         employmentType: 'FULL_TIME',
         shiftId: '',
+        cnic: '',
+        highestQualification: '',
+        institute: '',
     });
+    const [cnicError, setCnicError] = useState('');
+    const [document, setDocument] = useState<File | null>(null);
 
     useEffect(() => {
         const fetchDepartments = async () => {
@@ -84,6 +89,51 @@ export default function AddEmployeePage() {
         fetchDepartments();
         fetchShifts();
     }, []);
+
+    // Validate CNIC format (XXXXX-XXXXXXX-X)
+    const validateCNIC = (cnic: string): boolean => {
+        if (!cnic) return true; // Optional field
+        const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
+        return cnicRegex.test(cnic);
+    };
+
+    // Handle CNIC change with validation
+    const handleCNICChange = (value: string) => {
+        setFormData({ ...formData, cnic: value });
+        if (value && !validateCNIC(value)) {
+            setCnicError('Invalid CNIC format. Use: 12345-1234567-1');
+        } else {
+            setCnicError('');
+        }
+    };
+
+    // Handle file selection
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        if (!allowedTypes.includes(file.type)) {
+            toast.error('Invalid file type. Only PDF, DOC, and DOCX files are allowed');
+            return;
+        }
+
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('File size exceeds 5MB limit');
+            return;
+        }
+
+        setDocument(file);
+        toast.success('Document selected successfully');
+    };
+
+    // Remove selected document
+    const handleRemoveDocument = () => {
+        setDocument(null);
+        toast.info('Document removed');
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -209,6 +259,93 @@ export default function AddEmployeePage() {
                                         <SelectItem value="OTHER">Other</SelectItem>
                                     </SelectContent>
                                 </Select>
+                            </div>
+                            <div>
+                                <Label htmlFor="cnic">CNIC Number</Label>
+                                <Input
+                                    id="cnic"
+                                    placeholder="12345-1234567-1"
+                                    value={formData.cnic}
+                                    onChange={(e) => handleCNICChange(e.target.value)}
+                                    className={cnicError ? 'border-red-500' : ''}
+                                />
+                                {cnicError && (
+                                    <p className="text-sm text-red-500 mt-1">{cnicError}</p>
+                                )}
+                            </div>
+                            <div>
+                                <Label htmlFor="highestQualification">Highest Qualification</Label>
+                                <Input
+                                    id="highestQualification"
+                                    placeholder="e.g., Bachelor's in Computer Science"
+                                    value={formData.highestQualification}
+                                    onChange={(e) => setFormData({ ...formData, highestQualification: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="institute">Institute/University</Label>
+                                <Input
+                                    id="institute"
+                                    placeholder="e.g., MIT, Harvard"
+                                    value={formData.institute}
+                                    onChange={(e) => setFormData({ ...formData, institute: e.target.value })}
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Document Upload */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Document Upload</CardTitle>
+                            <CardDescription>Upload CV/Resume or other documents (Optional)</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                {!document ? (
+                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                                        <div className="flex flex-col items-center justify-center space-y-2">
+                                            <Upload className="h-8 w-8 text-gray-400" />
+                                            <div className="text-center">
+                                                <Label htmlFor="document" className="cursor-pointer text-primary hover:underline">
+                                                    Click to upload document
+                                                </Label>
+                                                <p className="text-sm text-muted-foreground mt-1">
+                                                    PDF, DOC, DOCX (Max 5MB)
+                                                </p>
+                                            </div>
+                                            <Input
+                                                id="document"
+                                                type="file"
+                                                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                                onChange={handleFileChange}
+                                                className="hidden"
+                                            />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="border rounded-lg p-4 bg-muted">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center space-x-3">
+                                                <FileText className="h-8 w-8 text-primary" />
+                                                <div>
+                                                    <p className="font-medium">{document.name}</p>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        {(document.size / 1024).toFixed(2)} KB
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={handleRemoveDocument}
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </CardContent>
                     </Card>
@@ -363,3 +500,5 @@ export default function AddEmployeePage() {
         </div>
     );
 }
+
+

@@ -5,7 +5,8 @@ import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Mail, Phone, MapPin, Calendar, Briefcase, Building2, Target, Award, Eye } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, MapPin, Calendar, Briefcase, Building2, Target, Award, Eye, CreditCard, GraduationCap, School } from 'lucide-react';
+import DocumentUpload from '@/components/employees/DocumentUpload';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StarRating } from '@/components/performance/StarRating';
@@ -32,6 +33,9 @@ interface Employee {
     hireDate: string;
     employmentType: string;
     status: string;
+    cnic?: string;
+    highestQualification?: string;
+    institute?: string;
 }
 
 export default function EmployeeDetailPage() {
@@ -42,6 +46,7 @@ export default function EmployeeDetailPage() {
     const [employee, setEmployee] = useState<Employee | null>(null);
     const [reviews, setReviews] = useState<any[]>([]);
     const [goals, setGoals] = useState<any[]>([]);
+    const [documents, setDocuments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -49,6 +54,7 @@ export default function EmployeeDetailPage() {
             fetchEmployee();
             fetchReviews();
             fetchGoals();
+            fetchDocuments();
         }
     }, [id]);
 
@@ -101,6 +107,21 @@ export default function EmployeeDetailPage() {
         }
     };
 
+    const fetchDocuments = async () => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            const response = await fetch(`/api/employees/${id}/documents`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await response.json();
+            if (data.success) {
+                setDocuments(data.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch documents');
+        }
+    };
+
     const getStatusBadge = (status: string) => {
         const variants: Record<string, 'default' | 'secondary' | 'destructive'> = {
             ACTIVE: 'default',
@@ -148,6 +169,7 @@ export default function EmployeeDetailPage() {
                     <TabsTrigger value="info">General Info</TabsTrigger>
                     <TabsTrigger value="reviews">Review History</TabsTrigger>
                     <TabsTrigger value="goals">Performance Goals</TabsTrigger>
+                    <TabsTrigger value="documents">Documents</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="info" className="space-y-6">
@@ -183,6 +205,33 @@ export default function EmployeeDetailPage() {
                                                 {employee.city && `, ${employee.city}`}
                                                 {employee.country && `, ${employee.country}`}
                                             </p>
+                                        </div>
+                                    </div>
+                                )}
+                                {employee.cnic && (
+                                    <div className="flex items-center gap-3">
+                                        <CreditCard className="h-4 w-4 text-muted-foreground" />
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">CNIC</p>
+                                            <p className="font-medium">{employee.cnic}</p>
+                                        </div>
+                                    </div>
+                                )}
+                                {employee.highestQualification && (
+                                    <div className="flex items-center gap-3">
+                                        <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Highest Qualification</p>
+                                            <p className="font-medium">{employee.highestQualification}</p>
+                                        </div>
+                                    </div>
+                                )}
+                                {employee.institute && (
+                                    <div className="flex items-center gap-3">
+                                        <School className="h-4 w-4 text-muted-foreground" />
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Institute/University</p>
+                                            <p className="font-medium">{employee.institute}</p>
                                         </div>
                                     </div>
                                 )}
@@ -310,6 +359,22 @@ export default function EmployeeDetailPage() {
                                     ))}
                                 </div>
                             )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="documents">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Employee Documents</CardTitle>
+                            <CardDescription>Manage CV, certificates, and other employee documents</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <DocumentUpload
+                                employeeId={id}
+                                documents={documents}
+                                onUploadSuccess={fetchDocuments}
+                            />
                         </CardContent>
                     </Card>
                 </TabsContent>

@@ -79,6 +79,12 @@ npx prisma db seed
 
 # Start development server
 npm run dev
+
+# prisma studion
+cd backend
+npx prisma studio
+http://localhost:5555/
+
 ```
 
 Backend will run on `http://localhost:5000`

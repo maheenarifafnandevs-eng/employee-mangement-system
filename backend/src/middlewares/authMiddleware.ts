@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../utils/jwt';
+import { isTokenBlacklisted } from '../services/tokenBlacklist';
 
 export interface AuthRequest extends Request {
     user?: {
@@ -29,7 +30,15 @@ export const authMiddleware = (
             });
         }
 
-        const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+        const token = authHeader.substring(7); // Remove 'Bearer' prefix
+
+        // Check if token is blacklisted
+        if (isTokenBlacklisted(token)) {
+            return res.status(401).json({
+                success: false,
+                message: 'Token has been revoked',
+            });
+        }
 
         // Verify token
         const decoded = verifyAccessToken(token);
@@ -39,6 +48,7 @@ export const authMiddleware = (
             return res.status(401).json({
                 success: false,
                 message: 'Invalid or expired token',
+                code: 'TOKEN_EXPIRED',
             });
         }
 

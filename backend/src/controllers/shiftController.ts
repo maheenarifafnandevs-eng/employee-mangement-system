@@ -8,6 +8,7 @@ import logger from '../middlewares/logger';
  */
 export const getAllShifts = async (req: AuthRequest, res: Response) => {
     try {
+        console.log(`[ShiftController] Getting all shifts for user: ${req.user?.userId}`);
         const shifts = await prisma.shift.findMany({
             include: {
                 _count: {
@@ -15,6 +16,7 @@ export const getAllShifts = async (req: AuthRequest, res: Response) => {
                 }
             }
         });
+        console.log(`[ShiftController] Found ${shifts.length} shifts`);
 
         res.json({
             success: true,

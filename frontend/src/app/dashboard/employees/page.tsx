@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Search, MoreHorizontal, Pencil, Trash2, Eye } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -41,6 +41,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import BulkUploadDialog from '@/components/employees/BulkUploadDialog';
 
 interface Employee {
     id: string;
@@ -67,6 +68,7 @@ export default function EmployeesPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [shiftFilter, setShiftFilter] = useState('all');
     const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
 
     useEffect(() => {
         fetchEmployees();
@@ -170,10 +172,16 @@ export default function EmployeesPage() {
                         Manage your organization's employees
                     </p>
                 </div>
-                <Button onClick={() => router.push('/dashboard/employees/add')}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Employee
-                </Button>
+                <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setBulkUploadOpen(true)}>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Bulk Upload
+                    </Button>
+                    <Button onClick={() => router.push('/dashboard/employees/add')}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Employee
+                    </Button>
+                </div>
             </div>
 
             {/* Search and Filters */}
@@ -319,6 +327,16 @@ export default function EmployeesPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Bulk Upload Dialog */}
+            <BulkUploadDialog
+                open={bulkUploadOpen}
+                onOpenChange={setBulkUploadOpen}
+                onSuccess={fetchEmployees}
+            />
         </div>
     );
 }
+
+
+

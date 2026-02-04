@@ -9,6 +9,7 @@ import cookieParser from 'cookie-parser';
 import routes from './routes';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler';
 import logger from './middlewares/logger';
+import { initializeScheduledJobs } from './services/scheduledJobs';
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
@@ -56,6 +57,9 @@ app.listen(PORT, () => {
     console.log(`📡 API URL: http://localhost:${PORT}`);
     console.log(`📊 Health Check: http://localhost:${PORT}/health`);
     console.log('🚀 ========================================');
+
+    // Initialize scheduled jobs
+    initializeScheduledJobs();
 });
 
 export default app;

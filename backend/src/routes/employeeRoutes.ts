@@ -6,6 +6,10 @@ import {
     updateEmployee,
     deleteEmployee,
     getDashboardStats,
+    uploadDocument,
+    getEmployeeDocuments,
+    deleteDocument,
+    downloadDocument,
 } from '../controllers/employeeController';
 import {
     getEmployeePerformance,
@@ -14,6 +18,7 @@ import {
 import { authenticate } from '../middlewares/authMiddleware';
 import { requireRole } from '../middlewares/roleMiddleware';
 import { asyncHandler } from '../middlewares/errorHandler';
+import { uploadDocument as uploadMiddleware } from '../middlewares/fileUpload';
 
 const router = Router();
 
@@ -75,5 +80,33 @@ router.get('/:id/performance', asyncHandler(getEmployeePerformance));
  * @access  Private
  */
 router.get('/:id/attendance', asyncHandler(getEmployeeAttendance));
+
+/**
+ * @route   POST /api/employees/:id/documents
+ * @desc    Upload employee document
+ * @access  Admin, HR
+ */
+router.post('/:id/documents', requireRole('ADMIN', 'HR'), uploadMiddleware.single('file'), asyncHandler(uploadDocument));
+
+/**
+ * @route   GET /api/employees/:id/documents
+ * @desc    Get employee documents
+ * @access  Private
+ */
+router.get('/:id/documents', asyncHandler(getEmployeeDocuments));
+
+/**
+ * @route   DELETE /api/employees/documents/:documentId
+ * @desc    Delete employee document
+ * @access  Admin, HR
+ */
+router.delete('/documents/:documentId', requireRole('ADMIN', 'HR'), asyncHandler(deleteDocument));
+
+/**
+ * @route   GET /api/employees/documents/:documentId/download
+ * @desc    Download employee document
+ * @access  Private
+ */
+router.get('/documents/:documentId/download', asyncHandler(downloadDocument));
 
 export default router;

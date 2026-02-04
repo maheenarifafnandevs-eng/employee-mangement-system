@@ -11,6 +11,12 @@ import reviewCycleRoutes from './reviewCycleRoutes';
 import feedbackRoutes from './feedbackRoutes';
 import departmentRoutes from './departmentRoutes';
 import shiftRoutes from './shiftRoutes';
+import analyticsRoutes from './analyticsRoutes';
+import aiRoutes from './aiRoutes';
+import preferencesRoutes from './preferencesRoutes';
+import bulkUploadRoutes from './bulkUploadRoutes';
+import taskRoutes from './taskRoutes';
+import notificationRoutes from './notificationRoutes';
 
 const router = Router();
 
@@ -27,6 +33,12 @@ router.use('/review-cycles', reviewCycleRoutes);
 router.use('/feedback', feedbackRoutes);
 router.use('/departments', departmentRoutes);
 router.use('/shifts', shiftRoutes);
+router.use('/analytics', analyticsRoutes);
+router.use('/ai', aiRoutes);
+router.use('/preferences', preferencesRoutes);
+router.use('/employees/bulk-upload', bulkUploadRoutes);
+router.use('/tasks', taskRoutes);
+router.use('/notifications', notificationRoutes);
 
 // Health check for API
 router.get('/health', (req, res) => {

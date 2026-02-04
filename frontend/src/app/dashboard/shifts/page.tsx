@@ -57,14 +57,28 @@ export default function ShiftsPage() {
     const fetchShifts = async () => {
         try {
             const token = localStorage.getItem('accessToken');
+            console.log('Fetching shifts with token:', token ? 'Token exists' : 'No token');
+
             const response = await fetch('/api/shifts', {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Fetch shifts failed status:', response.status, errorText);
+                toast.error(`Error loading shifts: ${response.status}`);
+                return;
+            }
+
             const data = await response.json();
             if (data.success) {
+                console.log('Shifts loaded:', data.data);
                 setShifts(data.data);
+            } else {
+                console.error('API returned error:', data.message);
+                toast.error(data.message || 'Failed to fetch shifts');
             }
         } catch (error) {
             console.error('Failed to fetch shifts:', error);

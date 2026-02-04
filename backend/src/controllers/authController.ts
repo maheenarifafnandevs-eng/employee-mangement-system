@@ -2,8 +2,9 @@ import { Response } from 'express';
 import { AuthRequest } from '../middlewares/authMiddleware';
 import prisma from '../config/database';
 import { hashPassword, comparePassword } from '../utils/bcrypt';
-import { generateAccessToken, generateRefreshToken } from '../utils/jwt';
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt';
 import logger from '../middlewares/logger';
+import { blacklistToken } from '../services/tokenBlacklist';
 
 /**
  * Register new user
@@ -191,6 +192,141 @@ export const getProfile = async (req: AuthRequest, res: Response) => {
             success: false,
             message: 'Failed to fetch profile',
         });
+    };
+};
+
+/**
+ * Update user profile
+ */
+export const updateProfile = async (req: AuthRequest, res: Response) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: 'Not authenticated',
+            });
+        }
+
+        const { name, email, phone } = req.body;
+
+        // Check if email is being changed and if it's already taken
+        if (email && email !== req.user.email) {
+            const existingUser = await prisma.user.findUnique({
+                where: { email },
+            });
+
+            if (existingUser) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Email already in use',
+                });
+            }
+        }
+
+        // Update user
+        const updatedUser = await prisma.user.update({
+            where: { id: req.user.userId },
+            data: {
+                ...(name && { name }),
+                ...(email && { email }),
+            },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+                updatedAt: true,
+            },
+        });
+
+        // Update employee phone if provided and employee exists
+        if (phone) {
+            await prisma.employee.updateMany({
+                where: { userId: req.user.userId },
+                data: { phone },
+            });
+        }
+
+        logger.info(`Profile updated: ${updatedUser.email}`);
+
+        res.json({
+            success: true,
+            message: 'Profile updated successfully',
+            data: updatedUser,
+        });
+    } catch (error: any) {
+        logger.error('Update profile error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update profile',
+        });
+    }
+};
+
+/**
+ * Change user password
+ */
+export const changePassword = async (req: AuthRequest, res: Response) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: 'Not authenticated',
+            });
+        }
+
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Current and new passwords are required',
+            });
+        }
+
+        // Get user with password
+        const user = await prisma.user.findUnique({
+            where: { id: req.user.userId },
+        });
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+
+        // Verify current password
+        const isValidPassword = await comparePassword(currentPassword, user.password);
+
+        if (!isValidPassword) {
+            return res.status(401).json({
+                success: false,
+                message: 'Current password is incorrect',
+            });
+        }
+
+        // Hash new password
+        const hashedPassword = await hashPassword(newPassword);
+
+        // Update password
+        await prisma.user.update({
+            where: { id: req.user.userId },
+            data: { password: hashedPassword },
+        });
+
+        logger.info(`Password changed: ${user.email}`);
+
+        res.json({
+            success: true,
+            message: 'Password changed successfully',
+        });
+    } catch (error: any) {
+        logger.error('Change password error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to change password',
+        });
     }
 };
 
@@ -199,18 +335,103 @@ export const getProfile = async (req: AuthRequest, res: Response) => {
  */
 export const logout = async (req: AuthRequest, res: Response) => {
     try {
-        // In a real app, you might want to blacklist the token
+        // Get token from header
+        const authHeader = req.headers.authorization;
+
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.substring(7);
+
+            // Blacklist the access token
+            // Tokens expire in 15 minutes, so blacklist for that duration
+            const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+            await blacklistToken(token, expiresAt);
+        }
+
         logger.info(`User logged out: ${req.user?.email}`);
 
         res.json({
             success: true,
             message: 'Logout successful',
         });
-    } catch (_error: any) {
-        logger.error('Logout error:', _error);
+    } catch (error: any) {
+        logger.error('Logout error:', error);
         res.status(500).json({
             success: false,
             message: 'Logout failed',
+        });
+    }
+};
+
+/**
+ * Refresh access token
+ */
+export const refreshToken = async (req: AuthRequest, res: Response) => {
+    try {
+        const { refreshToken: token } = req.body;
+
+        if (!token) {
+            return res.status(400).json({
+                success: false,
+                message: 'Refresh token is required',
+            });
+        }
+
+        // Verify refresh token
+        const decoded = verifyRefreshToken(token);
+
+        if (!decoded) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid or expired refresh token',
+            });
+        }
+
+        // Verify user still exists
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.userId },
+            select: {
+                id: true,
+                email: true,
+                role: true,
+            },
+        });
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+
+        // Generate new access token
+        const accessToken = generateAccessToken({
+            userId: user.id,
+            email: user.email,
+            role: user.role,
+        });
+
+        // Optionally generate new refresh token (token rotation)
+        const newRefreshToken = generateRefreshToken({
+            userId: user.id,
+            email: user.email,
+            role: user.role,
+        });
+
+        logger.info(`Token refreshed for user: ${user.email}`);
+
+        res.json({
+            success: true,
+            message: 'Token refreshed successfully',
+            data: {
+                accessToken,
+                refreshToken: newRefreshToken,
+            },
+        });
+    } catch (error: any) {
+        logger.error('Refresh token error:', error);
+        res.status(401).json({
+            success: false,
+            message: 'Invalid refresh token',
         });
     }
 };

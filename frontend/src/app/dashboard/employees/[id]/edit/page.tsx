@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Upload, X, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Department {
@@ -40,6 +40,10 @@ interface Employee {
     hireDate: string;
     employmentType: string;
     status: string;
+    cnic?: string;
+    highestQualification?: string;
+    institute?: string;
+    shiftId?: string;
 }
 
 export default function EditEmployeePage() {
@@ -251,6 +255,93 @@ export default function EditEmployeePage() {
                                 value={formData.phone}
                                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                             />
+                        </div>
+                        <div>
+                            <Label htmlFor="cnic">CNIC Number</Label>
+                            <Input
+                                id="cnic"
+                                placeholder="12345-1234567-1"
+                                value={formData.cnic}
+                                onChange={(e) => handleCNICChange(e.target.value)}
+                                className={cnicError ? 'border-red-500' : ''}
+                            />
+                            {cnicError && (
+                                <p className="text-sm text-red-500 mt-1">{cnicError}</p>
+                            )}
+                        </div>
+                        <div>
+                            <Label htmlFor="highestQualification">Highest Qualification</Label>
+                            <Input
+                                id="highestQualification"
+                                placeholder="e.g., Bachelor's in Computer Science"
+                                value={formData.highestQualification}
+                                onChange={(e) => setFormData({ ...formData, highestQualification: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="institute">Institute/University</Label>
+                            <Input
+                                id="institute"
+                                placeholder="e.g., MIT, Harvard"
+                                value={formData.institute}
+                                onChange={(e) => setFormData({ ...formData, institute: e.target.value })}
+                            />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Document Upload */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Document Upload</CardTitle>
+                        <CardDescription>Upload CV/Resume or other documents (Optional)</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            {!document ? (
+                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                                    <div className="flex flex-col items-center justify-center space-y-2">
+                                        <Upload className="h-8 w-8 text-gray-400" />
+                                        <div className="text-center">
+                                            <Label htmlFor="document" className="cursor-pointer text-primary hover:underline">
+                                                Click to upload document
+                                            </Label>
+                                            <p className="text-sm text-muted-foreground mt-1">
+                                                PDF, DOC, DOCX (Max 5MB)
+                                            </p>
+                                        </div>
+                                        <Input
+                                            id="document"
+                                            type="file"
+                                            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                            onChange={handleFileChange}
+                                            className="hidden"
+                                        />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="border rounded-lg p-4 bg-muted">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center space-x-3">
+                                            <FileText className="h-8 w-8 text-primary" />
+                                            <div>
+                                                <p className="font-medium">{document.name}</p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    {(document.size / 1024).toFixed(2)} KB
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={handleRemoveDocument}
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </CardContent>
                 </Card>

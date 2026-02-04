@@ -1,6 +1,7 @@
 'use client';
 
-import { Bell, Search, User } from 'lucide-react';
+import { useState } from 'react';
+import { Search, User } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
     DropdownMenu,
@@ -12,10 +13,37 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
+import NotificationBell from '@/components/notifications/NotificationBell';
+import { MobileSidebar } from './MobileSidebar';
 
 export function Header() {
-    const handleLogout = () => {
-        localStorage.removeItem('token');
+    const router = useRouter();
+
+    const handleLogout = async () => {
+        // Clear localStorage
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.clear(); // Clear everything to be safe
+
+        // Clear cookies
+        document.cookie.split(";").forEach((c) => {
+            document.cookie = c
+                .replace(/^ +/, "")
+                .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+        });
+
+        // Call logout API
+        try {
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+        } catch (error) {
+            console.log('Logout API call failed, but continuing with logout');
+        }
+
+        // Force a hard redirect to login
         window.location.href = '/login';
     };
 
@@ -23,7 +51,8 @@ export function Header() {
         <header className="flex h-16 items-center justify-between border-b bg-card px-6">
             {/* Search */}
             <div className="flex flex-1 items-center gap-4">
-                <div className="relative w-96">
+                <MobileSidebar />
+                <div className="relative w-96 hidden md:block">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                         type="search"
@@ -36,10 +65,7 @@ export function Header() {
             {/* Right Section */}
             <div className="flex items-center gap-4">
                 {/* Notifications */}
-                <Button variant="ghost" size="icon" className="relative">
-                    <Bell className="h-5 w-5" />
-                    <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500" />
-                </Button>
+                <NotificationBell />
 
                 {/* User Menu */}
                 <DropdownMenu>
@@ -56,8 +82,12 @@ export function Header() {
                     <DropdownMenuContent align="end" className="w-56">
                         <DropdownMenuLabel>My Account</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>Profile</DropdownMenuItem>
-                        <DropdownMenuItem>Settings</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>
+                            Profile
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
+                            Settings
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleLogout}>
                             Logout

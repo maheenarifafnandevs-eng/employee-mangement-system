@@ -4,6 +4,11 @@ import {
     getAttendanceTrend,
     getDepartmentDistribution,
     getRecentActivity,
+    getAdminMetrics,
+    getHRMetrics,
+    getManagerMetrics,
+    getEmployeeMetrics,
+    getDashboardCharts,
 } from '../controllers/dashboardController';
 import { authenticate } from '../middlewares/authMiddleware';
 import { asyncHandler } from '../middlewares/errorHandler';
@@ -40,5 +45,40 @@ router.get('/department-distribution', asyncHandler(getDepartmentDistribution));
  * @access  Private
  */
 router.get('/recent-activity', asyncHandler(getRecentActivity));
+
+/**
+ * @route   GET /api/dashboard/admin-metrics
+ * @desc    Get admin dashboard metrics
+ * @access  Private (Admin only)
+ */
+router.get('/admin-metrics', asyncHandler(getAdminMetrics));
+
+/**
+ * @route   GET /api/dashboard/hr-metrics
+ * @desc    Get HR dashboard metrics
+ * @access  Private (HR/Admin only)
+ */
+router.get('/hr-metrics', asyncHandler(getHRMetrics));
+
+/**
+ * @route   GET /api/dashboard/manager-metrics
+ * @desc    Get manager dashboard metrics
+ * @access  Private (Manager/Admin only)
+ */
+router.get('/manager-metrics', asyncHandler(getManagerMetrics));
+
+/**
+ * @route   GET /api/dashboard/employee-metrics
+ * @desc    Get employee dashboard metrics
+ * @access  Private
+ */
+router.get('/employee-metrics', asyncHandler(getEmployeeMetrics));
+
+/**
+ * @route   GET /api/dashboard/charts
+ * @desc    Get dashboard charts data
+ * @access  Private
+ */
+router.get('/charts', asyncHandler(getDashboardCharts));
 
 export default router;

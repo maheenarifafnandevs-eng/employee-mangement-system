@@ -11,10 +11,10 @@ You need to change the **Output Directory** setting in Vercel to be empty (defau
 1.  Go to your **Vercel Dashboard**.
 2.  Select your project (`employee-management-frontend` or similar).
 3.  Go to **Settings** -> **Build & Development**.
-4.  Look for **Output Directory**.
-5.  If it is set to `public` (or anything else), **Delete it** (make it empty).
-    *   *Note:* The placeholder text might say `public` or `dist`, but the *value* should be empty so it uses the framework default.
-    *   If you can't make it empty, try setting it to `.next`.
+4.  **Framework Preset**: Ensure this is set to **Next.js**.
+    *   If it is set to "Other" or "None", change it to "Next.js".
+5.  **Output Directory**: Ensure this is **Override: Off** (empty) or specifically cleared.
+    *   If you manually typed `public`, delete it.
 6.  Click **Save**.
 7.  Go to the **Deployments** tab and **Redeploy** the latest commit.
 

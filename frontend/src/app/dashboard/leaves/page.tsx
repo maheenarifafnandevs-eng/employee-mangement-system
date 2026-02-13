@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Calendar as CalendarIcon, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -47,12 +47,7 @@ export default function LeavesPage() {
     const [balance, setBalance] = useState<any>(null);
     const [date, setDate] = useState<Date | undefined>(new Date());
 
-    useEffect(() => {
-        fetchLeaves();
-        fetchBalance();
-    }, [statusFilter]);
-
-    const fetchLeaves = async () => {
+    const fetchLeaves = useCallback(async () => {
         try {
             const token = localStorage.getItem('accessToken');
             const url = statusFilter === 'ALL'
@@ -74,9 +69,9 @@ export default function LeavesPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [statusFilter]);
 
-    const fetchBalance = async () => {
+    const fetchBalance = useCallback(async () => {
         try {
             const token = localStorage.getItem('accessToken');
             const response = await fetch('/api/leaves/balance', {
@@ -92,7 +87,12 @@ export default function LeavesPage() {
         } catch (error) {
             console.error('Failed to fetch balance:', error);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchLeaves();
+        fetchBalance();
+    }, [fetchLeaves, fetchBalance]);
 
     const handleApprove = async (id: string) => {
         try {

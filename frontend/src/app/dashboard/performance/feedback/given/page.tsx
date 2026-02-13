@@ -53,7 +53,7 @@ export default function GivenFeedbackPage() {
                 <Card>
                     <CardContent className="flex flex-col items-center justify-center p-10 text-center text-muted-foreground">
                         <MessageSquare className="h-12 w-12 mb-4 opacity-20" />
-                        <p>You haven't given any feedback yet.</p>
+                        <p>You haven&apos;t given any feedback yet.</p>
                         <Button className="mt-4" onClick={() => router.push('/dashboard/performance/feedback/add')}>
                             Give Feedback
                         </Button>
@@ -82,9 +82,9 @@ export default function GivenFeedbackPage() {
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-sm text-foreground/80">
-                                    "{item.comment}"
-                                </p>
+                                        <p className="text-sm text-foreground/80">
+                                            &quot;{item.comment}&quot;
+                                        </p>
                             </CardContent>
                         </Card>
                     ))}

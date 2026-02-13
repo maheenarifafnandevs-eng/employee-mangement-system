@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,11 +34,7 @@ export default function GoalDetailPage() {
     const [goal, setGoal] = useState<Goal | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        fetchGoal();
-    }, [id]);
-
-    const fetchGoal = async () => {
+    const fetchGoal = useCallback(async () => {
         try {
             const token = localStorage.getItem('accessToken');
             const response = await fetch(`/api/performance/goals/${id}`, {
@@ -55,7 +51,11 @@ export default function GoalDetailPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id]);
+
+    useEffect(() => {
+        fetchGoal();
+    }, [fetchGoal]);
 
     const getStatusBadge = (status: string) => {
         const variants: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }> = {

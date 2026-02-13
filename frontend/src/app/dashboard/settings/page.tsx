@@ -321,7 +321,7 @@ export default function SettingsPage() {
                         <CardContent>
                             <div className="space-y-4">
                                 <p className="text-sm text-muted-foreground">
-                                    If you're unable to see tasks or other employee-related features, you may need to create an employee record linked to your account.
+                                    If you&apos;re unable to see tasks or other employee-related features, you may need to create an employee record linked to your account.
                                 </p>
                                 <Button
                                     type="button"

@@ -311,9 +311,9 @@ export default function AttendancePage() {
                     {/* Today's Status */}
                     <Card className="shadow-md border-primary/10">
                         <CardHeader className="bg-primary/5 pb-3">
-                            <CardTitle className="text-lg flex items-center gap-2">
+                                <CardTitle className="text-lg flex items-center gap-2">
                                 <Clock className="h-5 w-5 text-primary" />
-                                Today's Timeline
+                                Today&apos;s Timeline
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="pt-6">

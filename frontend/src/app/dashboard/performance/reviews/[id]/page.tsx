@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,16 +17,13 @@ export default function ReviewDetailPage() {
     const [review, setReview] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (params.id) {
-            fetchReview();
-        }
-    }, [params.id]);
+    const id = params.id as string;
 
-    const fetchReview = async () => {
+    const fetchReview = useCallback(async () => {
+        if (!id) return;
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await fetch(`/api/reviews/${params.id}`, {
+            const response = await fetch(`/api/reviews/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const data = await response.json();
@@ -40,7 +37,11 @@ export default function ReviewDetailPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id]);
+
+    useEffect(() => {
+        fetchReview();
+    }, [fetchReview]);
 
     if (loading) {
         return <div className="flex items-center justify-center h-96">Loading review details...</div>;
@@ -123,7 +124,7 @@ export default function ReviewDetailPage() {
                         </CardHeader>
                         <CardContent>
                             <p className="text-sm italic leading-relaxed whitespace-pre-wrap">
-                                "{review.comments || 'No additional comments.'}"
+                                &quot;{review.comments || 'No additional comments.'}&quot;
                             </p>
                         </CardContent>
                     </Card>

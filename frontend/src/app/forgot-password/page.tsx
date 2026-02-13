@@ -62,14 +62,14 @@ export default function ForgotPasswordPage() {
                                 Check Your Email
                             </h1>
                             <p className="text-gray-600">
-                                We've sent password reset instructions to{' '}
+                                We&apos;ve sent password reset instructions to{' '}
                                 <span className="font-semibold">{email}</span>
                             </p>
                         </div>
 
                         <div className="space-y-4">
                             <p className="text-center text-sm text-gray-600">
-                                Didn't receive the email? Check your spam folder or{' '}
+                                Didn&apos;t receive the email? Check your spam folder or{' '}
                                 <button
                                     onClick={() => setSubmitted(false)}
                                     className="text-primary-blue hover:underline"
@@ -101,7 +101,7 @@ export default function ForgotPasswordPage() {
                             Forgot Password?
                         </h1>
                         <p className="text-gray-600">
-                            Enter your email and we'll send you instructions to reset your password
+                            Enter your email and we&apos;ll send you instructions to reset your password
                         </p>
                     </div>
 

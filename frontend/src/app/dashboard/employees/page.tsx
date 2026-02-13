@@ -169,7 +169,7 @@ export default function EmployeesPage() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Employees</h1>
                     <p className="text-muted-foreground">
-                        Manage your organization's employees
+                        Manage your organization&apos;s employees
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -189,7 +189,7 @@ export default function EmployeesPage() {
                 <CardHeader>
                     <CardTitle>Employee List</CardTitle>
                     <CardDescription>
-                        {filteredEmployees.length} employee{filteredEmployees.length !== 1 ? 's' : ''} found
+                        {filteredEmployees.length} {filteredEmployees.length !== 1 ? 'employees' : 'employee'} found
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

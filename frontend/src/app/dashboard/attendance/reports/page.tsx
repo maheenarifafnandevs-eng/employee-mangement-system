@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -50,12 +50,7 @@ export default function AttendanceReportsPage() {
     });
     const [departments, setDepartments] = useState<{ id: string, name: string }[]>([]);
 
-    useEffect(() => {
-        fetchDepartments();
-        fetchReport();
-    }, []);
-
-    const fetchDepartments = async () => {
+    const fetchDepartments = useCallback(async () => {
         try {
             const token = localStorage.getItem('accessToken');
             const response = await fetch('/api/departments', {
@@ -66,9 +61,9 @@ export default function AttendanceReportsPage() {
         } catch (error) {
             console.error('Failed to fetch departments:', error);
         }
-    };
+    }, []);
 
-    const fetchReport = async () => {
+    const fetchReport = useCallback(async () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('accessToken');
@@ -91,7 +86,12 @@ export default function AttendanceReportsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filters]);
+
+    useEffect(() => {
+        fetchDepartments();
+        fetchReport();
+    }, [fetchDepartments, fetchReport]);
 
     const handleExportCSV = () => {
         if (records.length === 0) return;

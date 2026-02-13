@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -121,13 +121,7 @@ export default function EditEmployeePage() {
     const handleRemoveDocument = () => {
         setDocument(null);
     };
-    useEffect(() => {
-        fetchDepartments();
-        fetchShifts();
-        fetchEmployee();
-    }, [id]);
-
-    const fetchShifts = async () => {
+    const fetchShifts = useCallback(async () => {
         try {
             const token = localStorage.getItem('accessToken');
             const response = await fetch('/api/shifts', {
@@ -142,9 +136,9 @@ export default function EditEmployeePage() {
         } catch (err) {
             console.error('Failed to fetch shifts', err);
         }
-    };
+    }, []);
 
-    const fetchDepartments = async () => {
+    const fetchDepartments = useCallback(async () => {
         try {
             const token = localStorage.getItem('accessToken');
             const response = await fetch('/api/departments', {
@@ -159,9 +153,9 @@ export default function EditEmployeePage() {
         } catch (err) {
             console.error('Failed to fetch departments', err);
         }
-    };
+    }, []);
 
-    const fetchEmployee = async () => {
+    const fetchEmployee = useCallback(async () => {
         try {
             const token = localStorage.getItem('accessToken');
             const response = await fetch(`/api/employees/${id}`, {
@@ -202,7 +196,13 @@ export default function EditEmployeePage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id]);
+
+    useEffect(() => {
+        fetchDepartments();
+        fetchShifts();
+        fetchEmployee();
+    }, [fetchDepartments, fetchShifts, fetchEmployee]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

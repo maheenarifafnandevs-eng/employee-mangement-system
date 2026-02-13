@@ -69,7 +69,7 @@ export default function TeamTasksPage() {
                         Team Tasks
                     </h1>
                     <p className="text-muted-foreground">
-                        Manage and monitor your team's tasks
+                        Manage and monitor your team&apos;s tasks
                     </p>
                 </div>
                 <Button onClick={() => setCreateDialogOpen(true)}>

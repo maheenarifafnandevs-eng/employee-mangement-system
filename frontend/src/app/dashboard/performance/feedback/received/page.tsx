@@ -62,7 +62,7 @@ export default function ReceivedFeedbackPage() {
                 <Card>
                     <CardContent className="flex flex-col items-center justify-center p-10 text-center text-muted-foreground">
                         <MessageSquare className="h-12 w-12 mb-4 opacity-20" />
-                        <p>You haven't received any feedback yet.</p>
+                        <p>You haven&apos;t received any feedback yet.</p>
                     </CardContent>
                 </Card>
             ) : (
@@ -87,7 +87,7 @@ export default function ReceivedFeedbackPage() {
                             </CardHeader>
                             <CardContent className="flex-1 flex flex-col gap-4">
                                 <p className="text-sm leading-relaxed text-muted-foreground flex-1">
-                                    "{item.comment}"
+                                    &quot;{item.comment}&quot;
                                 </p>
 
                                 {item.sentimentLabel && (

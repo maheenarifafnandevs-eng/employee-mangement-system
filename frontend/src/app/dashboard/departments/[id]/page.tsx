@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,11 +46,7 @@ export default function EditDepartmentPage() {
         description: '',
     });
 
-    useEffect(() => {
-        fetchDepartment();
-    }, [id]);
-
-    const fetchDepartment = async () => {
+    const fetchDepartment = useCallback(async () => {
         try {
             const token = localStorage.getItem('accessToken');
             const response = await fetch(`/api/departments/${id}`, {
@@ -71,7 +67,11 @@ export default function EditDepartmentPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id]);
+
+    useEffect(() => {
+        fetchDepartment();
+    }, [fetchDepartment]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

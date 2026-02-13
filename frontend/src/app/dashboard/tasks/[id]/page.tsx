@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -62,11 +62,7 @@ export default function TaskDetailPage() {
     const [updatingStatus, setUpdatingStatus] = useState(false);
     const [actualHours, setActualHours] = useState('');
 
-    useEffect(() => {
-        fetchTaskDetail();
-    }, [taskId]);
-
-    const fetchTaskDetail = async () => {
+    const fetchTaskDetail = useCallback(async () => {
         try {
             const token = localStorage.getItem('accessToken');
             const response = await fetch(`http://localhost:5000/api/tasks/${taskId}`, {
@@ -88,7 +84,11 @@ export default function TaskDetailPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [taskId, router]);
+
+    useEffect(() => {
+        fetchTaskDetail();
+    }, [fetchTaskDetail]);
 
     const handleStatusUpdate = async (newStatus: string) => {
         setUpdatingStatus(true);

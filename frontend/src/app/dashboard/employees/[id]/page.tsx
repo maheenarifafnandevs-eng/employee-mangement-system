@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,16 +49,7 @@ export default function EmployeeDetailPage() {
     const [documents, setDocuments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (id) {
-            fetchEmployee();
-            fetchReviews();
-            fetchGoals();
-            fetchDocuments();
-        }
-    }, [id]);
-
-    const fetchEmployee = async () => {
+    const fetchEmployee = useCallback(async () => {
         try {
             const token = localStorage.getItem('accessToken');
             const response = await fetch(`/api/employees/${id}`, {
@@ -75,9 +66,9 @@ export default function EmployeeDetailPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id]);
 
-    const fetchReviews = async () => {
+    const fetchReviews = useCallback(async () => {
         try {
             const token = localStorage.getItem('accessToken');
             const response = await fetch(`/api/reviews/employee/${id}`, {
@@ -90,9 +81,9 @@ export default function EmployeeDetailPage() {
         } catch (error) {
             console.error('Failed to fetch reviews');
         }
-    };
+    }, [id]);
 
-    const fetchGoals = async () => {
+    const fetchGoals = useCallback(async () => {
         try {
             const token = localStorage.getItem('accessToken');
             const response = await fetch(`/api/performance/goals?employeeId=${id}`, {
@@ -105,9 +96,9 @@ export default function EmployeeDetailPage() {
         } catch (error) {
             console.error('Failed to fetch goals');
         }
-    };
+    }, [id]);
 
-    const fetchDocuments = async () => {
+    const fetchDocuments = useCallback(async () => {
         try {
             const token = localStorage.getItem('accessToken');
             const response = await fetch(`/api/employees/${id}/documents`, {
@@ -120,7 +111,16 @@ export default function EmployeeDetailPage() {
         } catch (error) {
             console.error('Failed to fetch documents');
         }
-    };
+    }, [id]);
+
+    useEffect(() => {
+        if (id) {
+            fetchEmployee();
+            fetchReviews();
+            fetchGoals();
+            fetchDocuments();
+        }
+    }, [id, fetchEmployee, fetchReviews, fetchGoals, fetchDocuments]);
 
     const getStatusBadge = (status: string) => {
         const variants: Record<string, 'default' | 'secondary' | 'destructive'> = {

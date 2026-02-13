@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { enUS } from 'date-fns/locale';
@@ -51,11 +51,7 @@ export default function TaskCalendarPage() {
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState('all');
 
-    useEffect(() => {
-        fetchTasks();
-    }, [statusFilter]);
-
-    const fetchTasks = async () => {
+    const fetchTasks = useCallback(async () => {
         try {
             const token = localStorage.getItem('accessToken');
             const url = statusFilter === 'all'
@@ -87,7 +83,11 @@ export default function TaskCalendarPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [statusFilter]);
+
+    useEffect(() => {
+        fetchTasks();
+    }, [fetchTasks]);
 
     const eventStyleGetter = (event: CalendarEvent) => {
         const task = event.resource;

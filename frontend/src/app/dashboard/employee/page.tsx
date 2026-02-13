@@ -100,7 +100,7 @@ export default function EmployeeDashboardPage() {
             {/* Welcome Header */}
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Welcome back, {userName}! 👋</h1>
-                <p className="text-muted-foreground">Here's what's happening with your work today.</p>
+                <p className="text-muted-foreground">Here&apos;s what&apos;s happening with your work today.</p>
             </div>
 
             {/* Metrics Grid */}
